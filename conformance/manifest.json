@@ -1,5 +1,5 @@
 {
-  "corpusVersion": 6,
+  "corpusVersion": 7,
   "schemaVersion": 1,
   "envelope": {
     "magic": "OMT1",
@@ -37,7 +37,7 @@
       "id": "discovery-channels",
       "file": "vectors/discovery-channels.hex",
       "frameType": "discovery",
-      "description": "Object with three channels incl. ranges, a description and a unitless boolean channel",
+      "description": "Object with three channels incl. ranges, a description, declared value types and a unitless boolean channel",
       "input": {
         "schemaVersion": 1,
         "gameName": "conformance",
@@ -64,7 +64,8 @@
                   "min": 0,
                   "max": 9000
                 },
-                "description": "Engine revolutions per minute"
+                "description": "Engine revolutions per minute",
+                "type": "number"
               },
               {
                 "id": 1,
@@ -72,11 +73,13 @@
                 "unit": "m/s",
                 "range": {
                   "max": 30
-                }
+                },
+                "type": "number"
               },
               {
                 "id": 2,
-                "name": "lights.headlights"
+                "name": "lights.headlights",
+                "type": "boolean"
               }
             ]
           }
@@ -337,7 +340,8 @@
             "channels": [
               {
                 "name": "engine.rpm",
-                "unit": "rpm"
+                "unit": "rpm",
+                "type": "number"
               }
             ]
           }
@@ -368,12 +372,14 @@
             "channels": [
               {
                 "id": 1,
-                "name": "session.track"
+                "name": "session.track",
+                "type": "text"
               },
               {
                 "id": 2,
                 "name": "vehicle.speed",
-                "unit": "m/s"
+                "unit": "m/s",
+                "type": "number"
               }
             ],
             "values": [
@@ -439,6 +445,33 @@
         "generation": 3,
         "part": 1,
         "partCount": 2
+      }
+    },
+    {
+      "id": "discovery-identity",
+      "file": "vectors/discovery-identity.hex",
+      "frameType": "discovery",
+      "description": "Sender instance identity for session pickers and pinning: instanceLabel and host",
+      "input": {
+        "schemaVersion": 1,
+        "gameName": "conformance",
+        "sessionStartUnixUs": 1730000000000000,
+        "environment": {
+          "airDensity": 1.25,
+          "temperature": 20,
+          "pressure": 1,
+          "gravity": 9.5,
+          "medium": "asphalt"
+        },
+        "objects": [
+          {
+            "name": "obj",
+            "type": "aircraft",
+            "primary": true
+          }
+        ],
+        "instanceLabel": "Rig 2",
+        "host": "sim-pc"
       }
     }
   ]

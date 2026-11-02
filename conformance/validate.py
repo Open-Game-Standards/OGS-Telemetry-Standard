@@ -53,12 +53,12 @@ def main():
         sys.exit(1)
     check("manifest schemaVersion 1", manifest["schemaVersion"] == 1)
     ids = [v["id"] for v in manifest["vectors"]]
-    check("fourteen known vectors", ids == [
+    check("fifteen known vectors", ids == [
         "discovery-minimal", "discovery-channels", "motion-pose",
         "motion-channels", "motion-multi", "motion-bodydynamics",
         "event-impact", "discovery-gravity-vector", "motion-local-gravity",
         "motion-local-gravity-zero", "discovery-paged-p0", "discovery-paged-p1",
-        "motion-parts-p0", "motion-parts-p1"], str(ids))
+        "motion-parts-p0", "motion-parts-p1", "discovery-identity"], str(ids))
 
     nodes = struct_nodes(schema)
     for vec in manifest["vectors"]:
@@ -98,7 +98,8 @@ def check_discovery_minimal(d):
             and len(d.objects) == 1 and d.objects[0].name == "obj"
             and d.objects[0].primary
             and d.environment.airDensity == 1.25
-            and d.environment.medium == "asphalt")
+            and d.environment.medium == "asphalt"
+            and d.instanceLabel == "" and d.host == "")
 
 
 def check_discovery_channels(d):
@@ -110,7 +111,8 @@ def check_discovery_channels(d):
             and ch[0].range.min == 0 and ch[0].range.max == 9000
             and ch[1].name == "vehicle.speed" and ch[1].unit == "m/s"
             and ch[1].range.max == 30
-            and ch[2].name == "lights.headlights" and ch[2].unit == "")
+            and ch[2].name == "lights.headlights" and ch[2].unit == ""
+            and [c.type for c in ch] == ["number", "number", "boolean"])
 
 
 def check_motion_pose(m):
@@ -205,6 +207,7 @@ def check_discovery_paged_p0(d):
             and o.name == "demo_car" and o.type == "vehicle" and o.primary
             and o.typeLabel == "conformance car"
             and len(ch) == 1 and ch[0].id == 0 and ch[0].name == "engine.rpm"
+            and ch[0].type == "number"
             and len(list(o.values)) == 0)
 
 
@@ -217,8 +220,9 @@ def check_discovery_paged_p1(d):
             and o.name == "demo_car" and not o.primary and o.typeLabel == ""
             and len(list(o.drivePoints)) == 0
             and sorted(ch) == [1, 2]
-            and ch[1].name == "session.track"
+            and ch[1].name == "session.track" and ch[1].type == "text"
             and ch[2].name == "vehicle.speed" and ch[2].unit == "m/s"
+            and ch[2].type == "number"
             and len(vals) == 1 and vals[0].id == 1
             and vals[0].which == "text" and vals[0].text == "Test Ring")
 
@@ -240,6 +244,13 @@ def check_motion_parts_p1(m):
             and m.part == 1 and m.partCount == 2
             and o.name == "demo_car" and o.orientation.w == 0
             and o.which == "noDynamics" and cv == {2: 12.5})
+
+
+def check_discovery_identity(d):
+    o = d.objects[0]
+    return (d.instanceLabel == "Rig 2" and d.host == "sim-pc"
+            and d.gameName == "conformance"
+            and o.name == "obj" and o.type == "aircraft" and o.primary)
 
 
 def single_segment(payload):
@@ -564,6 +575,7 @@ expected_type = {
     "motion-local-gravity-zero": 1,
     "discovery-paged-p0": 0, "discovery-paged-p1": 0,
     "motion-parts-p0": 1, "motion-parts-p1": 1,
+    "discovery-identity": 0,
 }
 
 
