@@ -1,5 +1,5 @@
 {
-  "corpusVersion": 5,
+  "corpusVersion": 6,
   "schemaVersion": 1,
   "envelope": {
     "magic": "OMT1",
@@ -310,6 +310,135 @@
             }
           }
         ]
+      }
+    },
+    {
+      "id": "discovery-paged-p0",
+      "file": "vectors/discovery-paged-p0.hex",
+      "frameType": "discovery",
+      "description": "Paged discovery, page 0 of 2 (generation 3): the object\u0027s identity and its first channel",
+      "input": {
+        "schemaVersion": 1,
+        "gameName": "conformance",
+        "sessionStartUnixUs": 1730000000000000,
+        "environment": {
+          "airDensity": 1.25,
+          "temperature": 20,
+          "pressure": 1,
+          "gravity": 9.5,
+          "medium": "asphalt"
+        },
+        "objects": [
+          {
+            "name": "demo_car",
+            "type": "vehicle",
+            "typeLabel": "conformance car",
+            "primary": true,
+            "channels": [
+              {
+                "name": "engine.rpm",
+                "unit": "rpm"
+              }
+            ]
+          }
+        ],
+        "generation": 3,
+        "pageCount": 2
+      }
+    },
+    {
+      "id": "discovery-paged-p1",
+      "file": "vectors/discovery-paged-p1.hex",
+      "frameType": "discovery",
+      "description": "Paged discovery, page 1 of 2 (generation 3): the object by name only, with a session text channel and its value, and a streamed channel",
+      "input": {
+        "schemaVersion": 1,
+        "gameName": "conformance",
+        "sessionStartUnixUs": 1730000000000000,
+        "environment": {
+          "airDensity": 1.25,
+          "temperature": 20,
+          "pressure": 1,
+          "gravity": 9.5,
+          "medium": "asphalt"
+        },
+        "objects": [
+          {
+            "name": "demo_car",
+            "channels": [
+              {
+                "id": 1,
+                "name": "session.track"
+              },
+              {
+                "id": 2,
+                "name": "vehicle.speed",
+                "unit": "m/s"
+              }
+            ],
+            "values": [
+              {
+                "id": 1,
+                "text": "Test Ring"
+              }
+            ]
+          }
+        ],
+        "generation": 3,
+        "page": 1,
+        "pageCount": 2
+      }
+    },
+    {
+      "id": "motion-parts-p0",
+      "file": "vectors/motion-parts-p0.hex",
+      "frameType": "motion",
+      "description": "Motion tick in parts, part 0 of 2 (generation 3): pose and the first channel",
+      "input": {
+        "timestamp": 7.75,
+        "objects": [
+          {
+            "name": "demo_car",
+            "position": {
+              "x": 4,
+              "y": 0.5,
+              "z": -1
+            },
+            "orientation": {
+              "w": 1
+            },
+            "channels": [
+              {
+                "number": 4100
+              }
+            ]
+          }
+        ],
+        "generation": 3,
+        "partCount": 2
+      }
+    },
+    {
+      "id": "motion-parts-p1",
+      "file": "vectors/motion-parts-p1.hex",
+      "frameType": "motion",
+      "description": "Motion tick in parts, part 1 of 2 (generation 3): the object by name with channel values only",
+      "input": {
+        "timestamp": 7.75,
+        "objects": [
+          {
+            "name": "demo_car",
+            "channels": [
+              {
+                "id": 2,
+                "number": 12.5
+              }
+            ]
+          }
+        ],
+        "generation": 3,
+        "part": 1,
+        "partCount": 2
       }
     }
   ]

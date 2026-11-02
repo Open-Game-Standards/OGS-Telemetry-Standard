@@ -53,11 +53,12 @@ def main():
         sys.exit(1)
     check("manifest schemaVersion 1", manifest["schemaVersion"] == 1)
     ids = [v["id"] for v in manifest["vectors"]]
-    check("ten known vectors", ids == [
+    check("fourteen known vectors", ids == [
         "discovery-minimal", "discovery-channels", "motion-pose",
         "motion-channels", "motion-multi", "motion-bodydynamics",
         "event-impact", "discovery-gravity-vector", "motion-local-gravity",
-        "motion-local-gravity-zero"], str(ids))
+        "motion-local-gravity-zero", "discovery-paged-p0", "discovery-paged-p1",
+        "motion-parts-p0", "motion-parts-p1"], str(ids))
 
     nodes = struct_nodes(schema)
     for vec in manifest["vectors"]:
@@ -195,6 +196,50 @@ MASK64 = (1 << 64) - 1
 
 class EncodingError(Exception):
     pass
+
+
+def check_discovery_paged_p0(d):
+    o = d.objects[0]
+    ch = list(o.channels)
+    return (d.generation == 3 and d.page == 0 and d.pageCount == 2
+            and o.name == "demo_car" and o.type == "vehicle" and o.primary
+            and o.typeLabel == "conformance car"
+            and len(ch) == 1 and ch[0].id == 0 and ch[0].name == "engine.rpm"
+            and len(list(o.values)) == 0)
+
+
+def check_discovery_paged_p1(d):
+    o = d.objects[0]
+    ch = {c.id: c for c in o.channels}
+    vals = list(o.values)
+    # a later page lists the object by name only: identity stays default
+    return (d.generation == 3 and d.page == 1 and d.pageCount == 2
+            and o.name == "demo_car" and not o.primary and o.typeLabel == ""
+            and len(list(o.drivePoints)) == 0
+            and sorted(ch) == [1, 2]
+            and ch[1].name == "session.track"
+            and ch[2].name == "vehicle.speed" and ch[2].unit == "m/s"
+            and len(vals) == 1 and vals[0].id == 1
+            and vals[0].which == "text" and vals[0].text == "Test Ring")
+
+
+def check_motion_parts_p0(m):
+    o = m.objects[0]
+    cv = {c.id: c.number for c in o.channels if c.which == "number"}
+    return (m.timestamp == 7.75 and m.generation == 3
+            and m.part == 0 and m.partCount == 2
+            and o.name == "demo_car" and o.position.x == 4 and o.orientation.w == 1
+            and cv == {0: 4100})
+
+
+def check_motion_parts_p1(m):
+    o = m.objects[0]
+    cv = {c.id: c.number for c in o.channels if c.which == "number"}
+    # a later part carries channel values only: pose and dynamics are default
+    return (m.timestamp == 7.75 and m.generation == 3
+            and m.part == 1 and m.partCount == 2
+            and o.name == "demo_car" and o.orientation.w == 0
+            and o.which == "noDynamics" and cv == {2: 12.5})
 
 
 def single_segment(payload):
@@ -517,6 +562,8 @@ expected_type = {
     "motion-bodydynamics": 1, "event-impact": 2,
     "discovery-gravity-vector": 0, "motion-local-gravity": 1,
     "motion-local-gravity-zero": 1,
+    "discovery-paged-p0": 0, "discovery-paged-p1": 0,
+    "motion-parts-p0": 1, "motion-parts-p1": 1,
 }
 
 
