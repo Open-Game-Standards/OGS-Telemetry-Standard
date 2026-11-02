@@ -61,10 +61,11 @@ Every receiver on the network pays for what a sender publishes: multicast reache
 
 The envelope comes to ~105 KB/s. On an access point that sends multicast at a 6 Mbit/s basic rate, the lowest common setting on 5 and 6 GHz, that is ~15 % of the channel's airtime; at a 24 Mbit/s basic rate, ~5 %; with multicast-to-unicast conversion, ~1.5 % per device that joined the group. A pose-only or typical game sender uses a fraction of it.
 
-Before cutting channels, a large sender uses the savings the format already gives at no cost to receivers:
+Before cutting channels, a large sender uses the savings the format already allows:
 
 - **Changed values only.** Absence means unchanged, so a value rides a motion frame only when it changes, plus the bounded refresh (§ Bounded refresh) that heals loss and serves late joiners.
 - **Session values for what rarely changes.** Switches, lights, radio frequencies, autopilot settings and identity strings go in `ObjectDescriptor.values` (DESIGN.md § Two channel cadences). They cost nothing per tick and travel in discovery only when they change.
+- **Descriptions where they carry meaning.** A description is display text that nothing binds on. Keep it where name and unit do not explain the value (enums, bitfields, values passed on as the game sends them, unknown units) and leave it empty where it would restate the name.
 - **Nothing for what is not there.** Empty lists stay null, unset optionality unions stay at their `Void` default, and a paused sender sends `noDynamics` (CONVENTIONS C-11); canonical encoding (implementation-capnproto.md § Encoding rules) then spends no bytes on them.
 
 A game or simulator whose consumers need more than this (thousands of values, every cockpit switch, values written back into the game) offers a dedicated API for that depth, as X-Plane, MSFS and DCS do, **and still publishes over OGS-TS** the core schema, the channels ratified in CHANNELS.md, and a curated set of further channels within the envelope. OGS-TS is the stream every device can use without game-specific code; the dedicated API serves the consumers written for that game. The sender references (reference-xplane12.md, reference-msfs2024.md) are curated this way.
@@ -103,7 +104,7 @@ OGS-TS works over Wi-Fi, so standalone VR headsets, handhelds and battery-powere
 - **Wired where possible.** Access points typically send multicast at the lowest basic data rate and without retransmission, so loss and airtime cost are higher than for unicast. Keep at least the receiver wired when it can be.
 - **Access point settings.** Client isolation (common on guest networks) blocks traffic between devices entirely. IGMP snooping without a querier can stop multicast reaching receivers after a few minutes. Some access points offer multicast-to-unicast conversion (also sold as multicast enhancement), which improves reliability and spares devices that have not joined the group. Where the access point allows it, a minimum basic rate of 12–24 Mbit/s cuts the airtime multicast costs every other device. 2.4 GHz with 802.11b rates enabled sends multicast at 1 Mbit/s, where even a typical sender takes over a quarter of the airtime.
 - **Android-based devices** (including standalone VR headsets) drop incoming multicast unless the app holds a `WifiManager.MulticastLock`, and need the `CHANGE_WIFI_MULTICAST_STATE` permission to take it. Senders need the `INTERNET` permission.
-- **Power saving** on battery devices can delay multicast delivery; receivers that need consistent timing should disable Wi-Fi power saving while active.
+- **Power saving** on battery devices can delay multicast delivery; receivers that need consistent timing should disable Wi-Fi power saving while active. While any device on an access point is in power save, the access point holds all multicast until its next DTIM beacon, typically ~100 ms and up to ~300 ms, which delays every wireless receiver on it; unicast is not held.
 
 Event replay (CONVENTIONS C-10) and receiver interpolation already absorb occasional loss; these points keep loss occasional.
 
