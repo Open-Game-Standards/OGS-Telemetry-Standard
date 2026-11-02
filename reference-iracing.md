@@ -92,8 +92,10 @@ also ride a channel. `SessionTick`/`SessionTime`/`FrameRate` stream
 `CarIdx*` arrays + `PlayerCarIdx` → one OGS-TS object per streamed car
 (descriptors built from `DriverInfo`; identity = car index). Guidance from
 test 14: primary object at full rate; remote cars throttled or
-distance-filtered (full-rate 64-car pose ≈ 266 KB/s at 60 Hz — affordable,
-wasteful). Per-car channels: `position`/`lapDistPct`/`estTime`/`gear`/
+distance-filtered. Full-rate 64-car pose is ≈ 266 KB/s at 60 Hz, about
+three times the sender size envelope (implementation-udp.md § Sender size
+envelope): stream remote cars at ≤ 15 Hz, or keep cars near the player at
+full rate and the rest at a few Hz. Per-car channels: `position`/`lapDistPct`/`estTime`/`gear`/
 `rpm`/`steer`/`onPitRoad`/`lap`/`classPosition`
 (`CarIdxPosition/LapDistPct/EstTime/Gear/RPM/Steer/OnPitRoad/Lap/
 ClassPosition`).
