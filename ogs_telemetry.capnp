@@ -105,9 +105,27 @@ struct DiscoveryFrame {
 
   # Re-send the whole frame when any descriptor changes (vehicle swap, channel
   # set change). Receivers key purely by ids, so re-sends are non-breaking.
+
+  # Paging (implementation-udp.md § Datagram budget). A descriptor set too
+  # large for one datagram is split into pages that share a generation;
+  # each page is a self-contained DiscoveryFrame declaring part of it.
+  generation @5 :UInt32;           # descriptor-set generation, kept by every sender:
+                                   # increments by one (wrapping) whenever any id,
+                                   # name, unit, range, drive point or object identity
+                                   # changes, never for session `values` alone.
+                                   # MotionFrame.generation names the set its ids
+                                   # refer to.
+  page @6 :UInt16;                 # 0-based index of this page within the generation
+  pageCount @7 :UInt16;            # pages in this generation; 0 or 1 = the frame is
+                                   # the complete set (unpaged)
 }
 
 struct ObjectDescriptor {
+  # In a paged generation an object may be listed on several pages. The
+  # lowest-numbered page listing it carries its full identity (type through
+  # drivePoints); later pages listing it carry only further channels and
+  # values, and receivers merge them by name. A channel id is declared on
+  # exactly one page of a generation.
   name @0 :Text;                   # stable per session; matches MotionObject.name
   type @1 :ObjectType;             # coarse class; ratifiable enum
   location @2 :Text;               # e.g. track/place name (display-only)
@@ -224,6 +242,16 @@ struct GenericSpec {
 struct MotionFrame {
   timestamp @0 :Float64;           # seconds since session start (anchor in discovery)
   objects @1 :List(MotionObject);  # primary object first
+  generation @2 :UInt32;           # DiscoveryFrame.generation the channel and
+                                   # drive-point ids in this frame refer to
+
+  # Parts (implementation-udp.md § Datagram budget). A tick too large for one
+  # datagram is sent as parts sharing this timestamp. Each object's pose,
+  # dynamics, localGravity and drive points ride the first part listing it in
+  # the tick (the primary object's ride part 0); a later part listing the same
+  # object carries channel values only, and receivers ignore its other fields.
+  part @3 :UInt16;                 # 0-based index of this part within the tick
+  partCount @4 :UInt16;            # parts carrying this tick; 0 or 1 = single datagram
 }
 
 struct MotionObject {

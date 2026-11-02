@@ -27,7 +27,11 @@ this repo; the reference implementations and engine plugins are siblings.
 1. **Discovery** — one `DiscoveryFrame` at session start, re-sent every
    ~2 s (late joiners) and whenever anything it declares changes. It must
    declare your primary object and every channel you stream, with ids
-   that stay stable for the session
+   that stay stable for the session. Increment `generation` whenever
+   anything declared changes (not for session values alone). A typical
+   sender fits one datagram and leaves `page` and `pageCount` at 0; a
+   sender with hundreds of channels pages it. Every datagram is at most
+   1,400 bytes (implementation-udp.md § Datagram budget)
 2. **Motion** — `MotionFrame`s at your telemetry rate (60–120 Hz
    typical): object name, position + unit quaternion in the CONVENTIONS
    world frame, channel values keyed by discovery ids. Keep sending while
@@ -41,8 +45,8 @@ this repo; the reference implementations and engine plugins are siblings.
 5. **Transport** — UDP multicast, default group `239.255.17.17:40123`,
    TTL 1 (local subnet)
 
-That's the whole contract. Receivers additionally apply the liveness and
-dedup rules in implementation-udp.md.
+That's the whole contract. Receivers additionally apply the liveness,
+dedup, page-merge and generation rules in implementation-udp.md.
 
 ### Naming: gameName and object names
 

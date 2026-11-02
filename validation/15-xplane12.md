@@ -37,6 +37,14 @@ interface rather than datarefs.
   XPLM/plugin path is exactly OGS-TS's engine-plugin sender model; the
   classic UDP DSET is the legacy bridge target (like the Dirt 4 carrier
   in test 11).
+- **Catalogue scale.** Subscribing to the dataref catalogue over UDP
+  (RREF) instead of the DSET table yields simulator-scale channel sets:
+  X-Plane 12's DataRefs.txt lists ~5,600 datarefs, and its telemetry
+  categories alone come to ~1,550 values with arrays capped at four
+  elements. A descriptor set that size spans many datagrams; it is
+  carried by paged discovery, motion parts and bounded refresh
+  (implementation-udp.md § Datagram budget), with pose and dynamics in
+  the first datagram of every tick.
 
 ## Verdict
 

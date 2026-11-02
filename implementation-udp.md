@@ -15,7 +15,40 @@ Each UDP datagram is an 8-byte envelope followed by one Cap'n Proto message:
 | 5 | 3 | Reserved — send 0, ignore on receive |
 | 8 | … | Cap'n Proto message (already word-aligned — readable in place) |
 
-Receivers check the magic and silently skip foreign packets (the multicast group may be shared). Datagrams stay well under a UDP MTU (see [implementation-capnproto.md](implementation-capnproto.md)).
+Receivers check the magic and silently skip foreign packets (the multicast group may be shared). Datagrams stay within the datagram budget below.
+
+## Datagram budget
+
+Every datagram, envelope included, MUST be at most **1,400 bytes**, so it travels as one Ethernet frame (a lost IP fragment loses the whole datagram) and no single send costs the sender a long serialization. Most senders never come close: a pose-only motion frame is ~68 bytes and a typical discovery a few hundred. Senders with large descriptor sets (full simulator catalogues, multi-car grids) stay within the budget with three mechanisms.
+
+### Paged discovery
+
+Every sender maintains `generation`: it increments by one (wrapping) whenever any id, name, unit, range, drive point or object identity changes, paged or not. A change to session `values` alone keeps the generation.
+
+A descriptor set that does not fit one datagram is split into **pages**: `DiscoveryFrame`s sharing one `generation`, each carrying `page` (0-based) and `pageCount`. `pageCount` 0 or 1 means the frame is the complete set.
+
+- Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs` and `environment` unchanged.
+- An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels` and `values`.
+- Each channel id is declared on exactly one page of a generation.
+- Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
+- A change to session `values` re-sends only the page carrying them.
+
+Receivers merge the pages of a generation by object name and channel id; each page is usable as soon as it arrives, with no need to wait for the rest. A frame with a different `generation` (or a new `sessionStartUnixUs`) starts a new descriptor set. Receivers keep the previous generation's tables while motion frames still carry its `generation`, so a vehicle swap never misreads ids. An unpaged frame (`pageCount` 0 or 1) replaces the descriptor set whole.
+
+### Motion parts
+
+A tick whose motion frame does not fit one datagram is sent as **parts**: `MotionFrame`s sharing the tick's `timestamp`, each carrying `part` (0-based) and `partCount`, sent back-to-back.
+
+- Each object's pose, dynamics, `localGravity` and drive points ride the first part that lists the object in the tick; the primary object rides part 0. A later part listing the same object carries channel values only, and receivers ignore its other fields.
+- Receivers apply each part on arrival, never waiting for the rest of the tick. Every part counts as a heartbeat.
+
+### Bounded refresh
+
+Absence means unchanged (DESIGN.md § Two channel cadences), so a sender may carry only the channels that changed. Such a sender re-sends every streamed value at least once per discovery interval (2 s), spreading this refresh across ticks so no tick exceeds the budget. Changed values take precedence over refresh values; when changed values alone exceed the budget, the tick goes out in parts.
+
+### Generations in motion frames
+
+`MotionFrame.generation` names the descriptor set its channel and drive-point ids refer to. A receiver that does not yet hold that generation's descriptor for an id holds back the value (it arrives again with the next change or refresh); pose and dynamics never depend on descriptors and are always applied.
 
 ## Event frames
 
@@ -59,10 +92,16 @@ Event replay (CONVENTIONS C-10) and receiver interpolation already absorb occasi
 
 | Frame | When to send |
 |---|---|
-| `DiscoveryFrame` | session start, on any declared change (vehicle swap, channel set change, medium change), and **re-sent every 2 seconds** |
+| `DiscoveryFrame` | session start, on any declared change (vehicle swap, channel set change, medium change), and **re-sent every 2 seconds** — all pages of the current generation |
 | `MotionFrame` | every telemetry tick, ~60 Hz — **including while the game is paused** (CONVENTIONS C-11) |
 
-The 2-second discovery re-send bounds late-joiner wait time at ~1.6 kbit/s of extra traffic — negligible, and it heals any lost discovery packet. Motion frames are fire-and-forget: receivers hold the last known pose and interpolate across occasional loss.
+The 2-second discovery re-send bounds late-joiner wait time at ~1.6 kbit/s of extra traffic for a typical single-page discovery — negligible, and it heals any lost discovery packet. Motion frames are fire-and-forget: receivers hold the last known pose and interpolate across occasional loss.
+
+Paged discovery is paced so that no tick pays for the whole set:
+
+- **Periodic re-send:** spread evenly across the 2-second interval — one page per motion tick, or the few per tick a very large set needs to complete within the interval.
+- **Session start and generation change:** all pages back-to-back, since motion frames naming the new generation are already flowing.
+- **Session value change:** the page carrying the changed values, at once.
 
 ## Sender (game side)
 
@@ -194,30 +233,42 @@ public:
 
 private:
     bool onDiscovery(DiscoveryFrame::Reader d) {
-        // (Re)build the id -> descriptor tables: channel names/units/ranges,
-        // drive-point geometry, environment. Idempotent — a re-sent
-        // discovery simply overwrites. If the primary object's ObjectType
-        // changed (player entered a vehicle/aircraft), switch the cueing
-        // preset — discovery re-sends are the within-game auto-switching
-        // signal.
-        channelNames_.clear();
+        // Build the id -> descriptor tables: channel names/units/ranges,
+        // drive-point geometry, environment. Idempotent — a re-sent page
+        // simply overwrites its own entries. If the primary object's
+        // ObjectType changed (player entered a vehicle/aircraft), switch the
+        // cueing preset — discovery re-sends are the within-game
+        // auto-switching signal.
+        bool paged = d.getPageCount() > 1;
+        auto& tables = generations_[d.getGeneration()];
+        if (!paged) tables.clear();               // unpaged: the complete set
         for (ObjectDescriptor::Reader obj : d.getObjects())
             for (ChannelDescriptor::Reader ch : obj.getChannels())
-                channelNames_[ch.getId()] = ch.getName().cStr();
+                tables[ch.getId()] = ch.getName().cStr();   // pages merge
+        // Keep only this generation and the one motion frames may still name.
+        pruneGenerationsOlderThan(d.getGeneration());
         return true;
     }
 
     bool onMotion(MotionFrame::Reader f) {
+        auto tables = generations_.find(f.getGeneration());
         for (MotionObject::Reader obj : f.getObjects()) {
+            // Pose and dynamics never depend on descriptors — always apply
+            // (from the first part listing the object in this tick).
             // obj.getPosition(), obj.getOrientation() …
             // Derive velocity/acceleration from pose deltas when absent.
+            // Channel values: apply those whose id is known in
+            // tables->second; hold back the rest until their page arrives.
             // If a descriptor declared a range, drop out-of-range values.
         }
         return true;
     }
 
+    void pruneGenerationsOlderThan(uint32_t generation);   // keeps generation and its predecessor
+
     int fd_;
-    std::unordered_map<uint16_t, std::string> channelNames_;
+    // generation -> (channel id -> name); a real receiver keys per object too
+    std::unordered_map<uint32_t, std::unordered_map<uint16_t, std::string>> generations_;
 };
 ```
 
@@ -229,7 +280,7 @@ the stream itself:
 - A paused game keeps streaming, with `session.paused` set (CONVENTIONS
   C-11), so a pause never trips the rules below: silence means the
   sender stopped, not that the player paused.
-- Motion frames are the heartbeat. If no motion frame arrives for ~5×
+- Motion frames (any part) are the heartbeat. If no motion frame arrives for ~5×
   the expected tick interval (or 1 s when the rate is unknown), mark the
   session stale: hold the last pose, stop driving actuators toward new
   targets, and surface the state in UI.

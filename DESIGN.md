@@ -106,7 +106,8 @@ cadences:
 This is the same split as motorsport CAN + DBC files: declare the signal
 dictionary once, stream bare values. Senders key everything by `UInt16` ids
 assigned in discovery; receivers that miss a descriptor wait for the next
-discovery re-send.
+discovery re-send. A dictionary too large for one datagram is paged, and a
+tick too large for one datagram is sent in parts (§ 6).
 
 ## 3. Frame structure
 
@@ -221,8 +222,10 @@ channels if a game ever exposes it.
   motion):
   - *Streamed channels*: fast-changing values (tyre temps, boost pressure,
     assist states) ride `MotionObject.channels` per tick. Absence means
-    unchanged: receivers keep the latest known value per id; late joiners
-    converge within one tick of each sender's rate.
+    unchanged: receivers keep the latest known value per id. A sender that
+    carries only changed values re-sends every value within each 2-second
+    discovery interval (bounded refresh), so late joiners converge within
+    that interval.
   - *Session channels*: rarely-changing values (setup, session type, stage
     name, weather preset, labels) carry their current value in
     `ObjectDescriptor.values`. A change re-sends discovery, so a receiver
@@ -244,8 +247,19 @@ channels if a game ever exposes it.
   struct fields are inline, not nullable); there are no sentinels, and
   zeros are real readings.
 - **Discovery re-send on change.** Vehicle swap, channel set change, or medium
-  change (air → water) re-sends the whole `DiscoveryFrame`. Idempotent by
-  design.
+  change (air → water) re-sends the whole `DiscoveryFrame` (every page) under
+  a new `generation`. Idempotent by design.
+- **Paged discovery and generations.** A descriptor set larger than one
+  datagram is split into self-contained pages of one `generation`;
+  receivers merge them by object name and id, and use each page on arrival.
+  Motion frames name the generation their ids refer to, so a vehicle swap
+  never misreads ids while the new pages are in flight. Paging stays inside
+  the protocol: plain multicast, no reassembly buffers, no side channel, and
+  a lost page delays only its own descriptors.
+- **Motion parts keep pose first.** A tick too large for one datagram goes
+  out in parts sharing a timestamp. Pose, dynamics and drive points ride the
+  first part listing each object, so motion consumers never wait on channel
+  volume.
 - **Ranges in descriptors, not per frame.** Min/max per descriptor restores
   sane error handling (clients drop out-of-range values) without paying the
   cost on every frame.
@@ -337,9 +351,13 @@ channels if a game ever exposes it.
 
 - `MotionFrame`, one object, pose only: ~68 bytes.
 - Four wheels (full extended data) + eight channels ≈ +280 bytes, still far
-  under a 1400-byte UDP MTU at 60 Hz.
-- `DiscoveryFrame`: ~300-800 bytes once per session (strings dominate);
-  negligible on any LAN and trivially fragmentable.
+  within the 1,400-byte datagram budget at 60 Hz.
+- `DiscoveryFrame`: ~300-800 bytes for a typical sender (strings dominate),
+  re-sent every 2 s.
+- Every datagram stays within a mandatory 1,400-byte budget. Simulator-scale senders
+  (full catalogues, multi-car grids) page discovery, split large ticks into
+  parts and spread the value refresh across ticks
+  (`implementation-udp.md` § Datagram budget).
 
 ## 7. Transport
 
@@ -347,7 +365,8 @@ One UDP multicast group, one port. Each datagram carries an 8-byte envelope
 (magic `OMT1`; frame type `0x00` discovery, `0x01` motion, `0x02` event;
 reserved) followed by the Cap'n Proto message, which stays word-aligned and
 readable in place. `DiscoveryFrame` is sent at session start, on change, and
-re-sent every 2 seconds so late joiners converge and lost discovery heals;
+re-sent every 2 seconds (paged when large) so late joiners converge and lost
+discovery heals;
 `MotionFrame` is fire-and-forget: receivers hold the last pose and
 interpolate across occasional loss. Defaults: group `239.255.17.17`, port
 `40123`, TTL 1; all configurable. See `implementation-udp.md`.

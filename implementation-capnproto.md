@@ -308,8 +308,9 @@ Cap'n Proto requires 8-byte word alignment — the UDP envelope is 8 bytes, so a
 ## Wire size
 
 - `MotionFrame`, one object, pose only: ~68 bytes.
-- Four wheels (full extended data) + eight channels ≈ +280 bytes — comfortably under a 1400-byte UDP MTU at 60 Hz.
-- `DiscoveryFrame`: ~300–800 bytes, sent once per session — strings dominate, so declare channels generously; they cost nothing per frame.
+- Four wheels (full extended data) + eight channels ≈ +280 bytes — comfortably within the mandatory 1,400-byte datagram budget at 60 Hz.
+- `DiscoveryFrame`: ~300–800 bytes for a typical sender, re-sent every 2 s — strings dominate, so declare channels generously; they cost nothing per frame. A channel descriptor costs roughly 50–120 bytes (name, unit and description dominate), so one page holds ~10–25 channels; larger sets are paged.
+- Simulator-scale senders (hundreds of channels, multi-car grids) stay within the budget through paged discovery, motion parts and bounded refresh ([implementation-udp.md](implementation-udp.md) § Datagram budget).
 
 The equivalent self-describing-per-frame JSON would be several times larger on every packet.
 
@@ -318,7 +319,7 @@ The equivalent self-describing-per-frame JSON would be several times larger on e
 - **Adding fields or variants (v1.x):** receivers built against an older schema skip unknown fields and unknown union discriminants silently — no coordination needed.
 - **Optional data:** optionality is carried by union discriminants (`noDynamics`/`core`/`noRange`/`noSuspension`/…), never by null struct fields — inline struct fields are not nullable in Cap'n Proto. Pointer fields (text, lists, union struct members like `range`, `suspension`) do have `hasX()` accessors; check them or the discriminant before use.
 - **Unset unions:** an optionality union a sender never touches is zero-initialized, which is its `Void` default. Receivers skip unknown discriminants as described in [Encoding rules](#encoding-rules-normative).
-- **Adding channels or drive points:** change the `DiscoveryFrame` and re-send it; receivers key by id and simply see new entries.
+- **Adding channels or drive points:** change the `DiscoveryFrame` (a new `generation`) and re-send it; receivers key by id and simply see new entries.
 - **Removing or renumbering ids:** never mid-session — ids are the contract between discovery and motion frames.
 
 ## Library layer
