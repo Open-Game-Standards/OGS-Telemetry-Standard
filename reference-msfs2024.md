@@ -11,7 +11,7 @@ Source variables: the MSFS 2024 SDK SimVar set (1,354 documented names).
 
 | OGS-TS field | SimVar source | Conversion |
 |---|---|---|
-| `kinematics.position` | local world X/Y/Z (session-stable local origin — re-origin on teleport, not planetary absolutes) | m, direct |
+| `position` | local world X/Y/Z (session-stable local origin — re-origin on teleport, not planetary absolutes) | m, direct |
 | `orientation` | `PLANE_PITCH/BANK/HEADING_DEGREES_TRUE` | Euler (rad!) → quaternion |
 | `kinematics.velocity` | `VELOCITY_WORLD_X/Y/Z` | m/s, direct |
 | `kinematics.acceleration` | `ACCELERATION_WORLD_X/Y/Z` | ft/s² → m/s² ×0.3048 |
@@ -35,7 +35,7 @@ current value in `ObjectDescriptor.values` (discovery, re-sent on change).
 ### Position / geo (stream, throttled)
 | Channel | Type | Unit | SimVar |
 |---|---|---|---|
-| `position.lat` / `position.lon` | number | deg | `PLANE LATITUDE/LONGITUDE` (rad → deg; Float32 ≈ 1 m — display-grade) |
+| `position.lat` / `position.lon` | number | rad | `PLANE LATITUDE/LONGITUDE` (radians, direct; Float32 ≈ 1 m — display-grade) |
 | `position.altMsl` | number | m | `PLANE_ALTITUDE` (ft → m) |
 | `env.heightFromGround` | number | m | `PLANE_ALT_ABOVE_GROUND` (the non-CG variant; CG relation is declared via `referencePoint`) |
 
@@ -87,7 +87,7 @@ current value in `ObjectDescriptor.values` (discovery, re-sent on change).
 `GENERAL ENG FAILED`, `*_FAILURE` families.
 
 ### Avionics / radios (session)
-`nav.com1.active[MHz]`, `nav.com1.standby`, `nav.nav1.active`,
+`nav.com1.active[Hz]`, `nav.com1.standby`, `nav.nav1.active`,
 `nav.adf.bearing[rad]`, `nav.xpdr.code`, `nav.gs`, `nav.locDeflection`… from
 the `COM/NAV/ADF/VOR/ILS/GPS/TRANSPONDER` families (134 vars — declarations
 follow the vendor manual's naming; ratify later per the ≥2-game bar).
