@@ -50,6 +50,25 @@ Absence means unchanged (DESIGN.md § Two channel cadences), so a sender may car
 
 `MotionFrame.generation` names the descriptor set its channel and drive-point ids refer to. A receiver that does not yet hold that generation's descriptor for an id holds back the value (it arrives again with the next change or refresh); pose and dynamics never depend on descriptors and are always applied.
 
+## Sender size envelope
+
+Every receiver on the network pays for what a sender publishes: multicast reaches all of them, and on Wi-Fi the access point re-sends it to every wireless device. A sender SHOULD stay within this envelope:
+
+| | Envelope | Typical capacity |
+|---|---|---|
+| Motion | one datagram (≤ 1,400 bytes) per tick at 60 Hz, or ~85 KB/s at other rates | pose, dynamics, drive points and ~150 changing channel values per tick |
+| Discovery | ~30 KB per generation, every page re-sent within 2 s (~15 datagrams/s) | ~250–300 channel descriptors with descriptions |
+
+The envelope comes to ~105 KB/s. On an access point that sends multicast at a 6 Mbit/s basic rate, the lowest common setting on 5 and 6 GHz, that is ~15 % of the channel's airtime; at a 24 Mbit/s basic rate, ~5 %; with multicast-to-unicast conversion, ~1.5 % per device that joined the group. A pose-only or typical game sender uses a fraction of it.
+
+Before cutting channels, a large sender uses the savings the format already gives at no cost to receivers:
+
+- **Changed values only.** Absence means unchanged, so a value rides a motion frame only when it changes, plus the bounded refresh (§ Bounded refresh) that heals loss and serves late joiners.
+- **Session values for what rarely changes.** Switches, lights, radio frequencies, autopilot settings and identity strings go in `ObjectDescriptor.values` (DESIGN.md § Two channel cadences). They cost nothing per tick and travel in discovery only when they change.
+- **Nothing for what is not there.** Empty lists stay null, unset optionality unions stay at their `Void` default, and a paused sender sends `noDynamics` (CONVENTIONS C-11); canonical encoding (implementation-capnproto.md § Encoding rules) then spends no bytes on them.
+
+A game or simulator whose consumers need more than this (thousands of values, every cockpit switch, values written back into the game) offers a dedicated API for that depth, as X-Plane, MSFS and DCS do, **and still publishes over OGS-TS** the core schema, the channels ratified in CHANNELS.md, and a curated set of further channels within the envelope. OGS-TS is the stream every device can use without game-specific code; the dedicated API serves the consumers written for that game. The sender references (reference-xplane12.md, reference-msfs2024.md) are curated this way.
+
 ## Event frames
 
 `EventFrame`s are sent on demand (irregular cadence, often bursty) and
@@ -79,10 +98,10 @@ All values are defaults — every implementation should make endpoint and mode c
 
 ## Wireless networks
 
-OGS-TS works over Wi-Fi, so standalone VR headsets, handhelds and battery-powered devices can send or receive it. Wi-Fi handles multicast less well than a wired network, and these points apply:
+OGS-TS works over Wi-Fi, so standalone VR headsets, handhelds and battery-powered devices can send or receive it. The expected network is Wi-Fi 5 (802.11ac) or newer on 5 or 6 GHz. Wi-Fi handles multicast less well than a wired network, and these points apply:
 
 - **Wired where possible.** Access points typically send multicast at the lowest basic data rate and without retransmission, so loss and airtime cost are higher than for unicast. Keep at least the receiver wired when it can be.
-- **Access point settings.** Client isolation (common on guest networks) blocks traffic between devices entirely. IGMP snooping without a querier can stop multicast reaching receivers after a few minutes. Some access points offer multicast-to-unicast conversion, which improves reliability.
+- **Access point settings.** Client isolation (common on guest networks) blocks traffic between devices entirely. IGMP snooping without a querier can stop multicast reaching receivers after a few minutes. Some access points offer multicast-to-unicast conversion (also sold as multicast enhancement), which improves reliability and spares devices that have not joined the group. Where the access point allows it, a minimum basic rate of 12–24 Mbit/s cuts the airtime multicast costs every other device. 2.4 GHz with 802.11b rates enabled sends multicast at 1 Mbit/s, where even a typical sender takes over a quarter of the airtime.
 - **Android-based devices** (including standalone VR headsets) drop incoming multicast unless the app holds a `WifiManager.MulticastLock`, and need the `CHANGE_WIFI_MULTICAST_STATE` permission to take it. Senders need the `INTERNET` permission.
 - **Power saving** on battery devices can delay multicast delivery; receivers that need consistent timing should disable Wi-Fi power saving while active.
 

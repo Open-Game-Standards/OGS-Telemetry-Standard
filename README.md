@@ -131,9 +131,9 @@ group; no extra ports or proxying.
 Per-game implementation references: core schema mapping plus sender-declared
 channel tables, ready to build against.
 
-- [MSFS 2024 sender reference](reference-msfs2024.md) — the full SimVar set
-  (1,354 variables) mapped onto OGS-TS core schema plus channels, with
-  conversions, cadences, and large-world precision guidance.
+- [MSFS 2024 sender reference](reference-msfs2024.md) — a curated set
+  from the 1,354 documented SimVars mapped onto OGS-TS core schema plus
+  channels, with conversions, cadences, and large-world precision guidance.
 - [X-Plane 12 sender reference](reference-xplane12.md) — a curated
   dataref set (~125 channels) mapped onto OGS-TS core schema plus
   channels: frame conversion from X-Plane's local OpenGL frame, wheel

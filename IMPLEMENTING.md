@@ -44,6 +44,11 @@ this repo; the reference implementations and engine plugins are siblings.
    encoding rules in implementation-capnproto.md
 5. **Transport** — UDP multicast, default group `239.255.17.17:40123`,
    TTL 1 (local subnet)
+6. **Size** — stay within the sender size envelope
+   (implementation-udp.md § Sender size envelope): one datagram per tick
+   and ~30 KB of discovery. A game with deeper telemetry offers its own
+   API alongside OGS-TS and still publishes the core and a curated set
+   here
 
 That's the whole contract. Receivers additionally apply the liveness,
 dedup, page-merge and generation rules in implementation-udp.md.
