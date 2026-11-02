@@ -134,6 +134,10 @@ channel tables, ready to build against.
 - [MSFS 2024 sender reference](reference-msfs2024.md) — the full SimVar set
   (1,354 variables) mapped onto OGS-TS core schema plus channels, with
   conversions, cadences, and large-world precision guidance.
+- [X-Plane 12 sender reference](reference-xplane12.md) — a curated
+  dataref set (~125 channels) mapped onto OGS-TS core schema plus
+  channels: frame conversion from X-Plane's local OpenGL frame, wheel
+  and engine drive points, failures as events, TCAS traffic as objects.
 - [iRacing sender reference](reference-iracing.md) — the irsdk set (telemetry
   + session-string YAML) mapped the same way, with multi-car grid guidance
   and capture-verify unit rules.
