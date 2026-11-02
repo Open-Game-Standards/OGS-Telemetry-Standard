@@ -99,7 +99,7 @@ cadences:
 
 | Frame | Cadence | Contents |
 |---|---|---|
-| `DiscoveryFrame` | once per session, re-sent on change | game name, session anchor, environment, object descriptors, drive-point descriptors (suspension spec rides WheelSpec), channel descriptors (id, name, unit, range, description) |
+| `DiscoveryFrame` | once per session, re-sent on change | game name, session anchor, environment, object descriptors, drive-point descriptors (suspension spec rides WheelSpec), channel descriptors (id, name, unit, range, description, value type) |
 | `MotionFrame` | ~60 Hz | timestamp, per-object pose (position, orientation quaternion), optional velocity/acceleration, drive-point state (typed union), channel values (id + typed value) |
 | `EventFrame` | on demand | discrete stimuli for haptics/cueing: id, name, intensity, duration, optional body-frame direction; redundancy by short replay + id dedup (CONVENTIONS C-10) |
 
@@ -216,7 +216,10 @@ channels if a game ever exposes it.
   (e.g. `hoverFan`) can be added in v1.x without breaking deployed receivers.
 - **Typed channel values.** Booleans (headlights, wipers) and text (mode labels)
   are first-class, not abused floats. Text at high rate is discouraged by
-  comment, not banned; dashboards sometimes need label changes.
+  comment, not banned; dashboards sometimes need label changes. The
+  descriptor declares the value type, so a receiver can lay out and bind a
+  channel before its first value; a value whose variant differs from a
+  declared type is dropped.
 - **Two channel cadences.** Custom datapoints come in two speeds, and the
   layer follows the cadence (the same principle that splits discovery from
   motion):

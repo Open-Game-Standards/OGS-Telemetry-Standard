@@ -160,7 +160,7 @@ across engine implementations — [conformance/](conformance/).
 
 The schema separates static metadata from per-frame samples: a low-rate
 `DiscoveryFrame` (environment, drive-point descriptors, self-describing channel
-declarations with type/unit/range — the standard's extension mechanism) and a
+declarations with value type/unit/range — the standard's extension mechanism) and a
 high-rate `MotionFrame` (the minimal pose core plus typed values keyed by
 discovery ids). See [DESIGN.md](DESIGN.md),
 [`ogs_telemetry.capnp`](ogs_telemetry.capnp), and the

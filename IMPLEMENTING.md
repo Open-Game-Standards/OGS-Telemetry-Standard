@@ -27,7 +27,7 @@ this repo; the reference implementations and engine plugins are siblings.
 1. **Discovery** — one `DiscoveryFrame` at session start, re-sent every
    ~2 s (late joiners) and whenever anything it declares changes. It must
    declare your primary object and every channel you stream, with ids
-   that stay stable for the session. Increment `generation` whenever
+   that stay stable for the session, each with its value `type`. Increment `generation` whenever
    anything declared changes (not for session values alone). A typical
    sender fits one datagram and leaves `page` and `pageCount` at 0; a
    sender with hundreds of channels pages it. Every datagram is at most

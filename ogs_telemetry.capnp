@@ -186,6 +186,17 @@ struct ChannelDescriptor {
     range @4 :Range;               # declared operating range
   }
   description @5 :Text;            # human-readable, shown by dash tools
+  type @6 :ChannelType;             # which ChannelValue variant carries this channel
+}
+
+enum ChannelType {
+  # Declared value type of a channel, so receivers can lay out and bind a
+  # channel before its first value arrives. `unspecified` holds the zero
+  # value: an unset type never claims a variant.
+  unspecified @0;
+  number      @1;
+  boolean     @2;
+  text        @3;
 }
 
 struct SuspensionSpec {

@@ -8,7 +8,7 @@ For the design behind the schema — the two frames and why metadata and samples
 
 The schema lives in [`ogs_telemetry.capnp`](ogs_telemetry.capnp) and defines two root messages:
 
-- **`DiscoveryFrame`** — sent once per session and re-sent whenever anything it describes changes. Declares the game, session anchor, environment, and per object: drive-point descriptors (geometry, suspension) and channel descriptors (id, name, unit, range).
+- **`DiscoveryFrame`** — sent once per session and re-sent whenever anything it describes changes. Declares the game, session anchor, environment, and per object: drive-point descriptors (geometry, suspension) and channel descriptors (id, name, unit, range, value type).
 - **`MotionFrame`** — sent at the telemetry rate (~60 Hz). Carries the pose core plus drive-point state and channel values, all keyed by the ids declared in discovery.
 
 Compile it for C++:
