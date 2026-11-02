@@ -118,6 +118,13 @@ struct DiscoveryFrame {
   page @6 :UInt16;                 # 0-based index of this page within the generation
   pageCount @7 :UInt16;            # pages in this generation; 0 or 1 = the frame is
                                    # the complete set (unpaged)
+
+  # Sender identity for receivers choosing among several senders on one
+  # network (implementation-udp.md § Senders and sessions). Display and
+  # pinning only: receivers tell senders apart by source address and port.
+  instanceLabel @8 :Text;          # user-set label for this instance, e.g. "Rig 2",
+                                   # "Instructor"; "" = none
+  host @9 :Text;                   # sender's host name, e.g. "sim-pc"; "" = not given
 }
 
 struct ObjectDescriptor {

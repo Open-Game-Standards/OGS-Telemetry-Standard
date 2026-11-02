@@ -27,7 +27,7 @@ Every sender maintains `generation`: it increments by one (wrapping) whenever an
 
 A descriptor set that does not fit one datagram is split into **pages**: `DiscoveryFrame`s sharing one `generation`, each carrying `page` (0-based) and `pageCount`. `pageCount` 0 or 1 means the frame is the complete set.
 
-- Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs` and `environment` unchanged.
+- Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs`, `instanceLabel`, `host` and `environment` unchanged.
 - An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels` and `values`.
 - Each channel id is declared on exactly one page of a generation.
 - Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
@@ -287,15 +287,36 @@ private:
     void pruneGenerationsOlderThan(uint32_t generation);   // keeps generation and its predecessor
 
     int fd_;
-    // generation -> (channel id -> name); a real receiver keys per object too
+    // generation -> (channel id -> name); a real receiver keys per sender
+    // (source address and port, § Senders and sessions) and per object too
     std::unordered_map<uint32_t, std::unordered_map<uint16_t, std::string>> generations_;
 };
 ```
 
+## Senders and sessions
+
+Several senders can share one multicast group: two games on one PC, a sim and its instructor station, a venue with several rigs. Discovery carries the session identity; motion and event frames do not, so receivers tell senders apart by where datagrams come from.
+
+Senders:
+
+- A sender sends all its frames (discovery, motion, events) from **one UDP socket** for its lifetime, so they share one source address and port.
+- `instanceLabel` (user-set, e.g. "Rig 2") and `host` (the sender's host name) identify the instance for pickers. Both are optional; when a sender can run as more than one instance on a network, it SHOULD let the user set `instanceLabel`.
+
+Receivers:
+
+- A **sender** is a source address and port. Each sender has its own descriptor tables, generations, liveness and event dedup; ids never resolve across senders.
+- A **session** is a sender plus `sessionStartUnixUs`. A discovery frame with a new `sessionStartUnixUs` from the same sender starts a new session; a sender that restarts on a new socket appears as a new sender.
+- Motion and event frames belong to the session of their source. A frame from a sender with no discovery yet is held back like any unresolved id (§ Generations in motion frames); its pose is still usable once the receiver binds to that sender.
+- A receiver that drives one output (a motion rig, a haptic device) binds to **one** session at a time and never blends frames from two senders. Monitors, loggers and recorders may follow every session.
+- Choosing a session:
+  1. **User choice.** A picker lists sessions by `gameName`, `instanceLabel` and `host` (or the source address).
+  2. **Pinned.** A remembered choice is stored as (`gameName`, `instanceLabel`, `host`), never as address and port, which change between runs, and is re-acquired when a matching sender appears.
+  3. **Automatic**, with nothing pinned: prefer a sender on the receiver's own host, then the session that started most recently. When more than one session is available, the receiver says so rather than choosing silently.
+
 ## Liveness and session end
 
 The sender gives no explicit goodbye, so receivers detect liveness from
-the stream itself:
+the stream itself, per sender (§ Senders and sessions):
 
 - A paused game keeps streaming, with `session.paused` set (CONVENTIONS
   C-11), so a pause never trips the rules below: silence means the

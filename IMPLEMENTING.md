@@ -43,7 +43,8 @@ this repo; the reference implementations and engine plugins are siblings.
    zeros, then the Cap'n Proto message (single segment), following the
    encoding rules in implementation-capnproto.md
 5. **Transport** — UDP multicast, default group `239.255.17.17:40123`,
-   TTL 1 (local subnet)
+   TTL 1 (local subnet), every frame from one socket (implementation-udp.md
+   § Senders and sessions)
 6. **Size** — stay within the sender size envelope
    (implementation-udp.md § Sender size envelope): one datagram per tick
    and ~30 KB of discovery. A game with deeper telemetry offers its own
@@ -60,7 +61,12 @@ per-game state (channel mappings, profiles), so senders SHOULD use the
 engine's product/project name when one is available (`Application.productName`,
 `FApp::GetProjectName()`, …) rather than a process/executable name; if only
 the executable is available, strip pack/build tokens ("Game-Win64-Shipping"
-→ "Game"). Users can always override via sender config.
+→ "Game"). Users can always override via sender config. Where more than
+one instance can run on a network (two rigs, a sim and its instructor
+station), senders SHOULD let the user set `instanceLabel`, and SHOULD fill
+`host` with the machine's host name; receivers show both in session
+pickers and pin choices by them (implementation-udp.md § Senders and
+sessions).
 
 Object `name` is the identity receivers match motion frames to discovery
 by — it MUST stay stable for the session. Senders that track a
