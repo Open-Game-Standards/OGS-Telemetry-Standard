@@ -37,14 +37,16 @@ interface rather than datarefs.
   XPLM/plugin path is exactly OGS-TS's engine-plugin sender model; the
   classic UDP DSET is the legacy bridge target (like the Dirt 4 carrier
   in test 11).
-- **Catalogue scale.** Subscribing to the dataref catalogue over UDP
-  (RREF) instead of the DSET table yields simulator-scale channel sets:
-  X-Plane 12's DataRefs.txt lists ~5,600 datarefs, and its telemetry
-  categories alone come to ~1,550 values with arrays capped at four
-  elements. A descriptor set that size spans many datagrams; it is
-  carried by paged discovery, motion parts and bounded refresh
-  (implementation-udp.md § Datagram budget), with pose and dynamics in
-  the first datagram of every tick.
+- **Catalogue scale.** Subscribing to datarefs over UDP (RREF) instead
+  of the DSET table exposes the whole catalogue: 5,484 current X-Plane 12
+  datarefs, all readable (X-Plane's `READONLY` / `MUTABLE` / `ACCESSOR`
+  marks writability, not readability), ~37,000 values with arrays
+  expanded. That is far beyond the sender size envelope
+  (implementation-udp.md § Sender size envelope). The X-Plane 12 sender
+  reference ([reference-xplane12.md](../reference-xplane12.md)) curates
+  ~125 channels whose values fit one datagram per tick; the rest of the
+  catalogue is served by X-Plane's own plugin, RREF and Web API
+  interfaces.
 
 ## Verdict
 
