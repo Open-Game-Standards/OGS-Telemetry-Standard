@@ -51,6 +51,11 @@ of the file.
   chooses another. A replay is a live stream to receivers, so it is
   subject to the same safety rules (implementation-udp.md § Trust and
   safety); a replay tool should make it obvious that it is sending.
+- **Replaying into one tool.** A tool may instead play a recording into
+  its own receiving path without sending anything (a monitor showing a
+  recording, a rig controller replaying a lap into its rig). Nothing
+  reaches other receivers, so this is the safer default for such tools;
+  the timing rule still applies.
 
 The conformance corpus includes a sample recording
 ([conformance/recordings/sample.ogsrec](conformance/recordings/)) of
