@@ -641,7 +641,32 @@ expected_type = {
 }
 
 
+def check_recording():
+    """recording.md: the sample recording's header and records, each
+    datagram one of the corpus vectors."""
+    import ipaddress
+    import struct
+    blob = (HERE / "recordings" / "sample.ogsrec").read_bytes()
+    check("recording magic and version", blob[:4] == b"OGSR" and struct.unpack_from("<H", blob, 4)[0] == 1)
+    check("recording capture start", struct.unpack_from("<q", blob, 8)[0] == 1_730_000_000_000_000)
+    vectors = {bytes.fromhex("".join(f.read_text().split())) for f in (HERE / "vectors").glob("*.hex")}
+    at, last, records, sources = 16, -1, 0, set()
+    while at < len(blob):
+        t, length, port, family = struct.unpack_from("<qIHB", blob, at)
+        alen = {4: 4, 6: 16}[family]
+        addr = ipaddress.ip_address(blob[at + 16:at + 16 + alen])
+        datagram = blob[at + 16 + alen:at + 16 + alen + length]
+        check(f"recording record {records} is a corpus datagram", datagram in vectors)
+        check(f"recording record {records} arrival non-decreasing", t >= last)
+        last, records = t, records + 1
+        sources.add((addr, port))
+        at += 16 + alen + length
+    check("recording ends on a record boundary", at == len(blob))
+    check("recording has five records from two senders", records == 5 and len(sources) == 2)
+
+
 if __name__ == "__main__":
     main()
+    check_recording()
     print(f"conformance: {PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

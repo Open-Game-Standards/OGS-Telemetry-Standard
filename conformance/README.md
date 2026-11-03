@@ -53,7 +53,9 @@ exactly, no epsilon.
 | `motion-texts` | a `TextValue` in a motion frame beside a number in `channels` |
 
 Malformed and future-shaped datagrams a receiver must survive live in
-[negative/](negative/).
+[negative/](negative/). `recordings/sample.ogsrec` is a sample
+recording ([recording.md](../recording.md)): five corpus datagrams from
+two senders, one IPv4 and one IPv6; `validate.py` checks it.
 
 ## Using the corpus
 

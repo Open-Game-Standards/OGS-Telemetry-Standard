@@ -151,6 +151,12 @@ providers, consumer documentation), 100+ game outputs, zero open gaps.
 
 [Validation tests and results](validation/README.md).
 
+### Recordings
+
+A session captured once replays into rigs, haptics and tools without
+the game: the `.ogsrec` format stores every datagram with its arrival
+time and source — [recording.md](recording.md).
+
 ### Conformance corpus
 
 Golden datagrams + semantic manifest for byte-level encoder agreement

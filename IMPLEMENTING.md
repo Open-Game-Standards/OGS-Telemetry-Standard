@@ -21,6 +21,8 @@ this repo; the reference implementations and engine plugins are siblings.
    follow
 6. [CHANNELS.md](CHANNELS.md) — ratified channel names with required
    units. Use them when the concept matches; never re-unit a ratified name
+7. [recording.md](recording.md) — the `.ogsrec` capture format, for tools
+   that record and replay sessions
 
 ## The minimum conformant sender
 
