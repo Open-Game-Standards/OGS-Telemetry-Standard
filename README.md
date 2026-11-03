@@ -75,7 +75,8 @@ and 1024 px PNG:
 
 Building a sender or receiver (any language, any engine — including
 custom ones)? Start at [IMPLEMENTING.md](IMPLEMENTING.md) — the
-implementer's path, minimum-conformant-sender checklist, corpus
+implementer's path, minimum-conformant-sender checklist, conformance
+levels (sender Core / Motion / Full, receiver Core / Hardware), corpus
 validation, and the fastest routes per engine.
 
 ### Reference implementations

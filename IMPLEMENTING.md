@@ -57,6 +57,31 @@ this repo; the reference implementations and engine plugins are siblings.
 That's the whole contract. Receivers additionally apply the liveness,
 dedup, page-merge and generation rules in implementation-udp.md.
 
+### Conformance levels
+
+A sender or receiver states the level it meets, so users and developers
+know what to expect. Each level includes the ones before it. The
+[OGS-TS Monitor](https://github.com/Open-Game-Standards/ogs-ts-monitor)
+checks most of it live.
+
+**Senders**
+
+| Level | Requires |
+|---|---|
+| **Core** | the minimum conformant sender above: envelope, discovery declaring the primary object and every channel with its value type, re-sent every ~2 s and on change with the generation rules, pose motion frames, every datagram within 1,400 bytes, one socket |
+| **Motion** | Core, plus: native dynamics (`bodyDynamics` or `kinematics`), `session.paused` with streaming kept up while paused (C-11), a declared `motionRateHz`, gravity declared (C-12), encoding that byte-matches the conformance corpus |
+| **Full** | Motion, plus: ratified channel names wherever the concept matches (CHANNELS.md), events with session-monotonic ids and replay (C-10) where the game has stimuli, the sender size envelope, instance identity, and the competitive play and privacy guidance below |
+
+**Receivers**
+
+| Level | Requires |
+|---|---|
+| **Core** | decodes the positive corpus and survives the negative corpus as specified; per-sender sessions; page merging and generations; liveness and session end |
+| **Hardware** | Core, plus: the trust and safety rules (implementation-udp.md § Trust and safety: one bound session, output limits, implausible input as a fault, arming), pause, replay and simulation-rate handling (C-11) |
+
+State it as, for example, "OGS-TS sender: Motion" or "OGS-TS receiver:
+Hardware".
+
 ### Naming: gameName and object names
 
 `gameName` identifies the session's source on receiver UIs and in
