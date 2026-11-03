@@ -33,7 +33,7 @@ this repo; the reference implementations and engine plugins are siblings.
    sender with hundreds of channels pages it. Every datagram is at most
    1,400 bytes (implementation-udp.md § Datagram budget)
 2. **Motion** — `MotionFrame`s at your telemetry rate (60–120 Hz
-   typical): object name, position + unit quaternion in the CONVENTIONS
+   typical), declared as discovery's `motionRateHz`: object name, position + unit quaternion in the CONVENTIONS
    world frame, channel values keyed by discovery ids. Keep sending while
    the game is paused, and report the pause with `session.paused`
    (CONVENTIONS C-11)

@@ -102,7 +102,7 @@ def check_discovery_minimal(d):
             and d.environment.atmosphere.which == "known"
             and d.environment.atmosphere.known.airDensity == 1.25
             and d.environment.medium == "asphalt"
-            and d.instanceLabel == "" and d.host == "")
+            and d.instanceLabel == "" and d.host == "" and d.motionRateHz == 0)
 
 
 def check_discovery_channels(d):
@@ -309,7 +309,7 @@ def check_motion_texts(m):
 
 def check_discovery_identity(d):
     o = d.objects[0]
-    return (d.instanceLabel == "Rig 2" and d.host == "sim-pc"
+    return (d.instanceLabel == "Rig 2" and d.host == "sim-pc" and d.motionRateHz == 60
             and d.gameName == "conformance"
             and o.name == "obj" and o.type == "aircraft" and o.primary)
 

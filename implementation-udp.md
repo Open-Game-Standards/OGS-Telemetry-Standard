@@ -27,7 +27,7 @@ Every sender maintains `generation`: it increments by one (wrapping) whenever an
 
 A descriptor set that does not fit one datagram is split into **pages**: `DiscoveryFrame`s sharing one `generation`, each carrying `page` (0-based) and `pageCount`. `pageCount` 0 or 1 means the frame is the complete set.
 
-- Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs`, `instanceLabel`, `host` and `environment` unchanged.
+- Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs`, `instanceLabel`, `host`, `motionRateHz` and `environment` unchanged.
 - An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels`, `values` and `texts`.
 - Each channel id is declared on exactly one page of a generation.
 - Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
@@ -113,7 +113,7 @@ Event replay (CONVENTIONS C-10) and receiver interpolation already absorb occasi
 | Frame | When to send |
 |---|---|
 | `DiscoveryFrame` | session start, on any declared change (vehicle swap, channel set change, medium change), and **re-sent every 2 seconds** — all pages of the current generation |
-| `MotionFrame` | every telemetry tick, ~60 Hz — **including while the game is paused** (CONVENTIONS C-11) |
+| `MotionFrame` | every telemetry tick, ~60 Hz, at the rate discovery declares in `motionRateHz` — **including while the game is paused** (CONVENTIONS C-11) |
 
 The 2-second discovery re-send bounds late-joiner wait time at ~1.6 kbit/s of extra traffic for a typical single-page discovery — negligible, and it heals any lost discovery packet. Motion frames are fire-and-forget: receivers hold the last known pose and interpolate across occasional loss.
 
@@ -335,7 +335,8 @@ the stream itself, per sender (§ Senders and sessions):
   C-11), so a pause never trips the rules below: silence means the
   sender stopped, not that the player paused.
 - Motion frames (any part) are the heartbeat. If no motion frame arrives for ~5×
-  the expected tick interval (or 1 s when the rate is unknown), mark the
+  the tick interval (from the declared `motionRateHz`; 1 s when it is
+  not declared), mark the
   session stale: hold the last pose, stop driving actuators toward new
   targets, and surface the state in UI.
 - Discovery re-sends (every 2 s) confirm session identity; a discovery

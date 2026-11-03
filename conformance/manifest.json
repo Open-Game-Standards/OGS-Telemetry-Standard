@@ -1,5 +1,5 @@
 {
-  "corpusVersion": 9,
+  "corpusVersion": 10,
   "schemaVersion": 1,
   "envelope": {
     "magic": "OMT1",
@@ -471,7 +471,7 @@
       "id": "discovery-identity",
       "file": "vectors/discovery-identity.hex",
       "frameType": "discovery",
-      "description": "Sender instance identity for session pickers and pinning: instanceLabel and host; an environment without an atmosphere model (noAtmosphere)",
+      "description": "Sender instance identity for session pickers and pinning: instanceLabel and host; a declared motion rate; an environment without an atmosphere model (noAtmosphere)",
       "input": {
         "schemaVersion": 1,
         "gameName": "conformance",
@@ -488,7 +488,8 @@
           }
         ],
         "instanceLabel": "Rig 2",
-        "host": "sim-pc"
+        "host": "sim-pc",
+        "motionRateHz": 60
       }
     },
     {

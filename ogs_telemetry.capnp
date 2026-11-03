@@ -140,6 +140,11 @@ struct DiscoveryFrame {
                                    # Both stay fixed for a session: a sender that
                                    # changes them starts a new session (new
                                    # sessionStartUnixUs).
+
+  motionRateHz @10 :Float32;       # nominal MotionFrame rate (ticks per second) the
+                                   # sender aims for; 0 = not declared. Receivers
+                                   # size staleness and interpolation from it
+                                   # (implementation-udp.md § Liveness)
 }
 
 struct ObjectDescriptor {
