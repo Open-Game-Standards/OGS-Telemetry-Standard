@@ -313,6 +313,19 @@ Receivers:
   2. **Pinned.** A remembered choice is stored as (`gameName`, `instanceLabel`, `host`), never as address and port, which change between runs, and is re-acquired when a matching sender appears. When two live sessions match one pin (two unlabelled instances of a game on one host), the pin is ambiguous: the receiver says so and asks, rather than picking one.
   3. **Automatic**, with nothing pinned: prefer a sender on the receiver's own host, then the session that started most recently. When more than one session is available, the receiver says so rather than choosing silently.
 
+## Trust and safety
+
+OGS-TS has no authentication. Any device on the network can send datagrams that look like any sender's, including frames crafted to drive hardware. The threat to plan for is not data theft (the stream is read-only telemetry) but a spoofed or faulty stream moving physical equipment: a motion platform, a force-feedback wheel, a fan or a shaker.
+
+Receivers that drive hardware:
+
+- MUST bind to one session (§ Senders and sessions) and ignore frames from every other source while bound.
+- MUST limit their output to the device's safe range, rate and acceleration, whatever the stream says. A frame is never a command to exceed the device's limits.
+- SHOULD treat physically implausible input as a fault rather than follow it: a pose jump far beyond the declared motion rate allows, a specific force far beyond any vehicle's, non-finite values. On a fault, hold or ease to rest as for a stale session (§ Liveness and session end).
+- SHOULD let the user arm the device before it follows a new session, rather than starting on the first frame from an unknown source.
+
+Senders cannot prevent spoofing; they keep to TTL 1 (or the user's configured scope) so the stream stays on the local network. Networks that need stronger guarantees (venues, shared spaces) isolate telemetry on their own VLAN or Wi-Fi network.
+
 ## Liveness and session end
 
 The sender gives no explicit goodbye, so receivers detect liveness from

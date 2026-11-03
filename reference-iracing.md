@@ -83,14 +83,16 @@ also ride a channel. `SessionTick`/`SessionTime`/`FrameRate` stream
 |---|---|
 | `WeekendInfo` (weather type, wind, commercial/team modes, track size) | session `values`/`texts` on the primary object |
 | `SessionInfo` (session type, results, laps) | session `values`/`texts` |
-| `DriverInfo` (driver/car entries per CarIdx) | **per-car object descriptors** (name, car number, typeLabel) for the multi-object grid |
+| `DriverInfo` (driver/car entries per CarIdx) | **per-car object descriptors** (car number as the name, typeLabel) for the multi-object grid; driver names are personal data and ride only as a user opt-in (IMPLEMENTING.md § Competitive play and privacy) |
 | `QualifyResultsInfo` | session `values`/`texts` |
 | `CameraInfo`, `RadioInfo`, `SplitTimeInfo` | session `values`/`texts` (consumer-UI features; SplitTime sectors may also stream `lap.sector*`) |
 
 ## Multi-car grid
 
 `CarIdx*` arrays + `PlayerCarIdx` → one OGS-TS object per streamed car
-(descriptors built from `DriverInfo`; identity = car index). Guidance from
+(descriptors built from `DriverInfo`; identity = car index). Remote cars during
+a live competitive session are a cheat feed (IMPLEMENTING.md § Competitive play
+and privacy): publish them in spectator and replay modes, or as a user opt-in. Guidance from
 test 14: primary object at full rate; remote cars throttled or
 distance-filtered. Full-rate 64-car pose is ≈ 266 KB/s at 60 Hz, about
 three times the sender size envelope (implementation-udp.md § Sender size

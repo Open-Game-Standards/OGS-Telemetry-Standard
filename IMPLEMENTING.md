@@ -96,6 +96,14 @@ itself: a vehicle swap re-sends discovery immediately (the ~2 s periodic
 re-send heals a lost one), so profile swaps land in realtime while the
 motion stream never changes shape.
 
+### Competitive play and privacy
+
+Everything a sender declares reaches every device on the network.
+
+- **Competitive multiplayer:** publish only the local player's own object and channels. Other players' positions, states or hidden information (a radar of the field, an opponent's fuel) are a cheat feed, and multiplayer games SHOULD NOT publish them while a competitive session runs. Spectator, replay and single-player modes may publish other objects.
+- **Personal data:** do not publish other people's personal data (names, account ids, chat) by default. A sender that offers it (a league overlay) makes it a user opt-in. The local player's own display name is the user's choice too.
+- **Location:** geographic position (`position.lat/lon`) of a real-world-mapped sim is the simulated aircraft's or vehicle's, not the user's; senders never publish the device's own location.
+
 ## Game-native units (bind-path conversions)
 
 The wire speaks C-3 units only. Games rarely do. The engine SDKs'
