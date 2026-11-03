@@ -121,11 +121,11 @@ dataref element 0), as in the MSFS 2024 reference.
 
 | Channel | Unit | Dataref |
 |---|---|---|
-| `air.speedIndicated` | m/s | `sim/flightmodel/position/indicated_airspeed` (kt ×0.514444) |
-| `air.speedTrue` | m/s | `sim/flightmodel/position/true_airspeed` |
+| `air.indicatedAirspeed` | m/s | `sim/flightmodel/position/indicated_airspeed` (kt ×0.514444) |
+| `air.trueAirspeed` | m/s | `sim/flightmodel/position/true_airspeed` |
 | `air.mach` | — | `sim/flightmodel/misc/machno` |
 | `air.verticalSpeed` | m/s | `sim/flightmodel/position/vh_ind` |
-| `air.alpha` / `air.beta` | rad | `sim/flightmodel/position/alpha` / `beta` (deg) |
+| `air.aoa` / `air.beta` | rad | `sim/flightmodel/position/alpha` / `beta` (deg) |
 | `air.alphaX/Y/Z` | rad/s2 | `sim/flightmodel/position/Q_dot`, `R_dot`, `P_dot` (deg/s²); x pitch, y yaw, z roll, as `angularVelocity` |
 | `air.turnBall` | — | `sim/flightmodel/misc/slip`, −1..1, + = ball right of centre |
 | `air.loadFactor` | — | `sim/flightmodel/forces/g_nrml`; 1 in level flight |
@@ -156,7 +156,8 @@ dataref element 0), as in the MSFS 2024 reference.
 | `ctrl.trim.elevator/aileron/rudder` | −1..1 | `sim/cockpit2/controls/elevator_trim/aileron_trim/rudder_trim` |
 | `ctrl.flaps` | 0..1 | `sim/cockpit2/controls/flap_handle_request_ratio` (handle) |
 | `flaps.deployed` | 0..1 | `sim/cockpit2/controls/flap_system_deploy_ratio` (surfaces) |
-| `ctrl.spoilers` | — | `sim/cockpit2/controls/speedbrake_ratio` (handle; 0..1, −0.5 = armed, as sent) |
+| `ctrl.spoilers` | 0..1 | `sim/cockpit2/controls/speedbrake_ratio` (handle), clamped at 0 |
+| `ctrl.spoilersArmed` | boolean | `sim/cockpit2/controls/speedbrake_ratio` < 0 (X-Plane reports armed as −0.5) |
 | `spoilers.deployed` | 0..1 | `sim/flightmodel2/controls/speedbrake_ratio` (surfaces) |
 | `brakes.left` / `brakes.right` | 0..1 | `sim/cockpit2/controls/left_brake_ratio` / `right_brake_ratio` |
 | `gear.handleDown` | boolean | `sim/cockpit2/controls/gear_handle_down`; session |

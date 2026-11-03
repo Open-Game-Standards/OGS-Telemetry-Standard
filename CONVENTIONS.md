@@ -159,6 +159,17 @@ Receivers:
 - An undeclared `session.paused` means the sender does not report
   pauses, never "paused".
 
+Replay and simulation rate:
+
+- A replay is not live simulation: the motion is a recording the player
+  watches. While `session.replay` is true, receivers SHOULD behave as for
+  a pause by default; a user may opt in to motion during replays.
+- `session.simRate` is simulation time per real time. Pose and dynamics
+  are reported as the simulation computes them, so at a rate other than 1
+  accelerations are the accelerated simulation's. Receivers SHOULD bring
+  actuators to rest when the rate is not 1, unless the user opts in.
+  Timestamps stay wall-clock (C-8).
+
 ## C-12 Gravity
 
 Gravity is a vector **g** in the world frame (C-1), m/s², pointing the way

@@ -42,10 +42,10 @@ current value in `ObjectDescriptor.values`, or `texts` for text channels (discov
 ### Air data (stream)
 | Channel | SimVar |
 |---|---|
-| `air.speedIndicated` / `air.speedTrue` (m/s) | `AIRSPEED INDICATED/TRUE` (kt) |
+| `air.indicatedAirspeed` / `air.trueAirspeed` (m/s) | `AIRSPEED INDICATED/TRUE` (kt) |
 | `air.mach` | `AIRSPEED MACH` |
 | `air.verticalSpeed` (m/s) | `VERTICAL_SPEED` (fpm) |
-| `air.alpha` / `air.beta` (rad) | `ANGLE OF ATTACK` / `SIDESLIP` |
+| `air.aoa` / `air.beta` (rad) | `ANGLE OF ATTACK` / `SIDESLIP` |
 | `air.alphaX/Y/Z` (rad/s²) | `ROTATION_ACCELERATION_BODY_X/Y/Z` — lever-arm α for consumer corrections |
 | `air.turnBall` (−1..1) | `TURN COORDINATOR BALL` (position) — + = ball right of centre, as MSFS reports; the slip/skid cue motion profiles use for tilt coordination |
 | `air.variometer` (m/s) | `VARIOMETER RATE` |
@@ -107,7 +107,7 @@ follow the vendor manual's naming; ratify later per the ≥2-game bar).
 ### Session / misc (session)
 `session.slew` (bool, `IS SLEW ACTIVE`), `session.paused`,
 `session.timeOfDayZulu[s]`, `perf.frameRate` (stream, `FRAME RATE`),
-`perf.simRate` (`SIM RATE`), `air.onGround` (stream, `SIM ON GROUND`).
+`session.simRate` (`SIM RATE`), `air.onGround` (stream, `SIM ON GROUND`).
 
 ## Sender notes
 

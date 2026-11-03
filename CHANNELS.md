@@ -37,14 +37,10 @@ Some channel families recur across domains without single fixed semantics.
 Use these prefixes so receivers can group them; individual names remain
 free-form until a specific entry is ratified:
 
-- `ctrl.*` — control-surface / control-input deflections: `ctrl.aileron`,
-  `ctrl.elevator`, `ctrl.rudder` (−1..1), `ctrl.flaps`, `ctrl.spoilers`
-  (0..1), `gear.down` (boolean). Signs follow CONVENTIONS C-5: a positive
-  input produces the positive rotation about the matching body axis
-  (`ctrl.elevator` + = nose-up, `ctrl.rudder` + = nose-right,
-  `ctrl.aileron` + = roll right-down, `ctrl.steering.angle` + = right;
-  the last is the handwheel — the road wheel's own angle is schema
-  `steerAngle`, C-6).
+- `ctrl.*` — control inputs beyond the ratified ones below (`ctrl.total.*`
+  after augmentation, `ctrl.steering.input`, …). Signs follow CONVENTIONS
+  C-5: a positive input produces the positive rotation about the matching
+  body axis.
 - `wind.*` — per-tick wind: `wind.trueSpeed` / `wind.apparentSpeed` (m/s),
   `wind.trueDirection` / `wind.apparentAngle` (rad). Direction follows the
   meteorological **from** convention in the world frame; apparent angle is
@@ -52,11 +48,11 @@ free-form until a specific entry is ratified:
   vector channels `wind.x/y/z` point toward where the air moves.
   Wind changes per gust, so it rides motion-frame channels — never the
   discovery-static `environment`.
-- `air.*` — air data: `air.trueAirspeed`, `air.indicatedAirspeed` (m/s),
-  `air.aoa` (rad), `air.mach`.
+- `air.*` — air data beyond the ratified entries below (`air.alphaX/Y/Z`
+  angular accelerations, `air.variometer`, …).
 
-These families are annex candidates once naming stabilizes across ≥2 games
-(`air.*` and `ctrl.*` already qualify on MSFS/X-Plane/DCS evidence).
+Further entries in these families are ratified as their naming stabilizes
+across ≥2 games.
 
 ## Ratification rules
 
@@ -93,6 +89,27 @@ These families are annex candidates once naming stabilizes across ≥2 games
 | `fuel.level` | number | — | Remaining fuel/energy fraction, 0..1 (C-3) |
 | `fuel.rate` | number | `m3/s` | Current consumption rate (L/h ÷ 3.6e6) |
 | `session.paused` | boolean | — | Simulation paused for the player (pause menu, sim pause). Carried in every motion frame; senders keep streaming while paused (C-11). Evidence: MSFS 2024 (SimConnect pause state, reference-msfs2024.md), X-Plane `sim/time/paused`, Assetto Corsa / ACC shared-memory status `AC_PAUSE` |
+| `session.replay` | boolean | — | A replay is playing rather than live simulation. Receivers treat it like a pause by default (CONVENTIONS C-11). Evidence: X-Plane `sim/time/is_in_replay`, iRacing `IsReplayPlaying`, Assetto Corsa / ACC status `AC_REPLAY` |
+| `session.simRate` | number | — | Simulation time per real time: 1 = real time, 4 = 4× accelerated, 0.5 = slow motion. Evidence: X-Plane `sim/time/sim_speed_actual`, MSFS `SIM RATE` |
+| `air.indicatedAirspeed` | number | `m/s` | Indicated airspeed |
+| `air.trueAirspeed` | number | `m/s` | True airspeed |
+| `air.verticalSpeed` | number | `m/s` | Rate of climb, + = climbing |
+| `air.mach` | number | — | Mach number |
+| `air.aoa` | number | `rad` | Angle of attack, + = nose above the flight path |
+| `air.beta` | number | `rad` | Sideslip angle, + = relative wind from the right (as C-7 apparent angles) |
+| `air.loadFactor` | number | — | Normal load factor in g, 1 in level flight |
+| `air.turnBall` | number | — | Slip/skid ball, −1..1, + = ball right of centre |
+| `ctrl.elevator` | number | — | Pilot pitch input, −1..1, + = nose-up (C-5) |
+| `ctrl.aileron` | number | — | Pilot roll input, −1..1, + = roll right-down (C-5) |
+| `ctrl.rudder` | number | — | Pilot yaw input, −1..1, + = nose-right (C-5) |
+| `ctrl.flaps` | number | — | Flap lever, 0..1 (0 = retracted) |
+| `ctrl.spoilers` | number | — | Spoiler / speedbrake lever, 0..1 (0 = retracted; an armed state rides its own channel) |
+| `ctrl.trim.elevator` / `ctrl.trim.aileron` / `ctrl.trim.rudder` | number | — | Trim, −1..1, signs as the matching control (C-5) |
+| `gear.position` | number | — | Landing gear extension, 0 = up, 1 = down |
+
+Evidence for the `air.*`, `ctrl.*` and `gear.position` entries: MSFS 2024,
+X-Plane 12, DCS World, Falcon BMS and IL-2 (the sender references and the
+OGS-TS Bridge's sources for them).
 
 Deliberately out of scope for now: race state (`race.lap`,
 `race.position`, lap timing) — recurring, but domain-specific enough to go
