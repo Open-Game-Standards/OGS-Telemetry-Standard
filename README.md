@@ -119,7 +119,7 @@ We propose using Cap'n Proto as the data format. Cap’n Proto is a zero-copy, b
 
 ### Data Transport
 
-The data transport is plain UDP multicast — one socket, no broker, no driver
+The data transport is plain UDP multicast (IPv4, with an IPv6 group for IPv6-only networks) — one socket, no broker, no driver
 process — with an 8-byte envelope identifying the frame type. Multiple local
 clients (dashboards, motion rigs, haptics, loggers) join the same multicast
 group; no extra ports or proxying.

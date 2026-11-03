@@ -91,11 +91,14 @@ liveness signal.
 | Setting | Value | Notes |
 |---|---|---|
 | Multicast group | `239.255.17.17` | Organization-local scope; avoids link-local reserved ranges |
-| Port | `40123` | |
-| TTL | 1 | Local network only |
-| Unicast alternative | `127.0.0.1:40123` | Single-client setups and testing |
+| IPv6 multicast group | `ff12::4f47:5453` | Transient, link-local scope (`4f47:5453` is "OGTS") |
+| Port | `40123` | Both address families |
+| TTL / hop limit | 1 | Local network only |
+| Unicast alternative | `127.0.0.1:40123` (`[::1]:40123`) | Single-client setups and testing |
 
 All values are defaults — every implementation should make endpoint and mode configurable.
+
+IPv4 is the default. A sender uses **one** address family for a session: IPv4, or IPv6 on a network without IPv4. Never both at once, since a receiver joined to both groups would see the two copies as two senders (§ Senders and sessions). Receivers SHOULD join both groups so that IPv6-only senders are found. The IPv6 group is link-local: join and send on the interface facing the LAN (its interface index), as for any link-local multicast.
 
 ## Wireless networks
 

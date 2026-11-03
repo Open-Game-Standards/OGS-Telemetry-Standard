@@ -42,7 +42,8 @@ this repo; the reference implementations and engine plugins are siblings.
 4. **Envelope** — every datagram is `OMT1` + frame-type byte + reserved
    zeros, then the Cap'n Proto message (single segment), following the
    encoding rules in implementation-capnproto.md
-5. **Transport** — UDP multicast, default group `239.255.17.17:40123`,
+5. **Transport** — UDP multicast, default group `239.255.17.17:40123`
+   (IPv6: `[ff12::4f47:5453]:40123`, one family per session),
    TTL 1 (local subnet), every frame from one socket (implementation-udp.md
    § Senders and sessions)
 6. **Size** — stay within the sender size envelope
