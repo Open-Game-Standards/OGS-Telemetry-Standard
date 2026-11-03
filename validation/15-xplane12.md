@@ -44,7 +44,7 @@ interface rather than datarefs.
   expanded. That is far beyond the sender size envelope
   (implementation-udp.md § Sender size envelope). The X-Plane 12 sender
   reference ([reference-xplane12.md](../reference-xplane12.md)) curates
-  ~125 channels whose values fit one datagram per tick; the rest of the
+  ~120 channels whose values fit one datagram per tick; the rest of the
   catalogue is served by X-Plane's own plugin, RREF and Web API
   interfaces.
 

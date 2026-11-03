@@ -135,7 +135,7 @@ channel tables, ready to build against.
   from the 1,354 documented SimVars mapped onto OGS-TS core schema plus
   channels, with conversions, cadences, and large-world precision guidance.
 - [X-Plane 12 sender reference](reference-xplane12.md) — a curated
-  dataref set (~125 channels) mapped onto OGS-TS core schema plus
+  dataref set (~120 channels) mapped onto OGS-TS core schema plus
   channels: frame conversion from X-Plane's local OpenGL frame, wheel
   and engine drive points, failures as events, TCAS traffic as objects.
 - [iRacing sender reference](reference-iracing.md) — the irsdk set (telemetry

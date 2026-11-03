@@ -16,7 +16,8 @@ plus a closed whitelist of declared exceptions — `degC` (temperature),
 ## For senders
 
 - If a channel's concept matches a ratified name below, use the ratified
-  name, type, and unit exactly (`engine.rpm` is `rpm` and a number).
+  name, type, and unit exactly (`engine.rpm` is `rpm` and a number), and
+  declare that type in the descriptor's `type`.
 - You MUST NOT reuse a ratified name with a different unit — that is a
   different channel; give it your own name.
 - Concepts not covered: name freely (`boat.anchorDepth`, `mech.reactorHeat`).

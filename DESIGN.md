@@ -99,8 +99,8 @@ cadences:
 
 | Frame | Cadence | Contents |
 |---|---|---|
-| `DiscoveryFrame` | once per session, re-sent on change | game name, session anchor, environment, object descriptors, drive-point descriptors (suspension spec rides WheelSpec), channel descriptors (id, name, unit, range, description, value type) |
-| `MotionFrame` | ~60 Hz | timestamp, per-object pose (position, orientation quaternion), optional velocity/acceleration, drive-point state (typed union), channel values (id + typed value) |
+| `DiscoveryFrame` | once per session, re-sent on change | game name, session anchor, instance identity (label, host), environment, object descriptors, drive-point descriptors (suspension spec rides WheelSpec), channel descriptors (id, name, unit, range, description, value type) |
+| `MotionFrame` | ~60 Hz | timestamp, per-object pose (position, orientation quaternion), optional velocity/acceleration, drive-point state (typed union), channel values (id + number or boolean), text values (id + text) |
 | `EventFrame` | on demand | discrete stimuli for haptics/cueing: id, name, intensity, duration, optional body-frame direction; redundancy by short replay + id dedup (CONVENTIONS C-10) |
 
 This is the same split as motorsport CAN + DBC files: declare the signal
@@ -335,16 +335,24 @@ channels if a game ever exposes it.
 - **Optionality is uniform across drive-point states.** Every state that
   carries quantities a sender may not measure (`WheelState`,
   `PropellerState`, `JetState`, `LegState`, `GenericState`) expresses
-  "not measured" via a single unnamed-union variant with a `Void` default:
-  Cap'n Proto structs allow only one unnamed union, so multi-field
-  optionals bundle into one all-or-neither sub-struct (`WheelExtended`,
-  `PropellerExtended`). Quantities measured independently of each other
-  get a named union each: `WheelState.torque` and `brakePressure`, which
-  many sources (aircraft gear, arcade physics) lack. Senders must not claim a variant with sentinel
+  "not measured" via a union variant with a `Void` default. Quantities
+  sources report together bundle into one all-or-neither sub-struct
+  (`TyreState`, `PropellerExtended`); quantities sources report
+  independently get a union each. Every `WheelState` measurement (rpm,
+  slip, compression, steer angle, load force, damper velocity, torque,
+  brake pressure) is its own named union, because sources expose very
+  different subsets: aircraft gear reports compression only, arcade
+  physics rpm and contact. Senders must not claim a variant with sentinel
   values; zeros inside measured fields are real readings. Recorded
   conventions live in [CONVENTIONS.md](CONVENTIONS.md): tyre wear 1 = new;
   tyre temp carcass/average °C; `SuspensionSpec.damping` 0 = unspecified
   (the receiver approximates load force from stiffness otherwise).
+- **Atmosphere is optional, gravity is not.** Air density, temperature and
+  pressure come together from a weather or atmosphere model, or not at
+  all, so `Environment.atmosphere` is one all-or-neither bundle and a game
+  without one leaves it unset (vacuum is a known atmosphere of zero
+  density). Gravity is always declared: a sender with no gravity model
+  declares standard gravity, 9.80665 m/s².
 - **`GenericState` carries force.** Generic drive points are multi-instance
   by design (four hover fans = four points), and per-point physical values
   cannot ride object-level channels without stringly-typed linkage. Force is
@@ -358,7 +366,7 @@ channels if a game ever exposes it.
 ## 6. Wire sizes
 
 - `MotionFrame`, one object, pose only: ~68 bytes.
-- Four wheels (full extended data) + eight channels ≈ +280 bytes, still far
+- Four wheels (every measurement and the tyre) + eight channels ≈ +490 bytes, still far
   within the 1,400-byte datagram budget at 60 Hz.
 - `DiscoveryFrame`: ~300-800 bytes for a typical sender (strings dominate),
   re-sent every 2 s.

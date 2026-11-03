@@ -23,12 +23,12 @@ Every datagram, envelope included, MUST be at most **1,400 bytes**, so it travel
 
 ### Paged discovery
 
-Every sender maintains `generation`: it increments by one (wrapping) whenever any id, name, unit, range, drive point or object identity changes, paged or not. A change to session `values` alone keeps the generation.
+Every sender maintains `generation`: it increments by one (wrapping) whenever any id, name, unit, range, value type, drive point or object identity changes, paged or not. A change to session `values` or `texts` alone keeps the generation.
 
 A descriptor set that does not fit one datagram is split into **pages**: `DiscoveryFrame`s sharing one `generation`, each carrying `page` (0-based) and `pageCount`. `pageCount` 0 or 1 means the frame is the complete set.
 
 - Every page repeats `schemaVersion`, `gameName`, `sessionStartUnixUs`, `instanceLabel`, `host` and `environment` unchanged.
-- An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels` and `values`.
+- An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels`, `values` and `texts`.
 - Each channel id is declared on exactly one page of a generation.
 - Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
 - A change to session `values` or `texts` re-sends only the page carrying them.
@@ -39,7 +39,7 @@ Receivers merge the pages of a generation by object name and channel id; each pa
 
 A tick whose motion frame does not fit one datagram is sent as **parts**: `MotionFrame`s sharing the tick's `timestamp`, each carrying `part` (0-based) and `partCount`, sent back-to-back.
 
-- Each object's pose, dynamics, `localGravity` and drive points ride the first part that lists the object in the tick; the primary object rides part 0. A later part listing the same object carries channel values only, and receivers ignore its other fields.
+- Each object's pose, dynamics, `localGravity` and drive points ride the first part that lists the object in the tick; the primary object rides part 0. A later part listing the same object carries channel and text values only, and receivers ignore its other fields.
 - Receivers apply each part on arrival, never waiting for the rest of the tick. Every part counts as a heartbeat.
 
 ### Bounded refresh
@@ -300,7 +300,7 @@ Several senders can share one multicast group: two games on one PC, a sim and it
 Senders:
 
 - A sender sends all its frames (discovery, motion, events) from **one UDP socket** for its lifetime, so they share one source address and port.
-- `instanceLabel` (user-set, e.g. "Rig 2") and `host` (the sender's host name) identify the instance for pickers. Both are optional; when a sender can run as more than one instance on a network, it SHOULD let the user set `instanceLabel`.
+- `instanceLabel` (user-set, e.g. "Rig 2") and `host` (the sender's host name) identify the instance for pickers. They stay fixed for a session (changing them starts a new session with a new `sessionStartUnixUs`). Both are optional; when a sender can run as more than one instance on a network, it SHOULD let the user set `instanceLabel`.
 
 Receivers:
 
@@ -310,7 +310,7 @@ Receivers:
 - A receiver that drives one output (a motion rig, a haptic device) binds to **one** session at a time and never blends frames from two senders. Monitors, loggers and recorders may follow every session.
 - Choosing a session:
   1. **User choice.** A picker lists sessions by `gameName`, `instanceLabel` and `host` (or the source address).
-  2. **Pinned.** A remembered choice is stored as (`gameName`, `instanceLabel`, `host`), never as address and port, which change between runs, and is re-acquired when a matching sender appears.
+  2. **Pinned.** A remembered choice is stored as (`gameName`, `instanceLabel`, `host`), never as address and port, which change between runs, and is re-acquired when a matching sender appears. When two live sessions match one pin (two unlabelled instances of a game on one host), the pin is ambiguous: the receiver says so and asks, rather than picking one.
   3. **Automatic**, with nothing pinned: prefer a sender on the receiver's own host, then the session that started most recently. When more than one session is available, the receiver says so rather than choosing silently.
 
 ## Liveness and session end

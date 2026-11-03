@@ -18,7 +18,7 @@
 | EGT / oil press/temp / afterburner | `engine.egt`, `engine.oilPressure`, `engine.afterburner` | custom channel |
 | internal fuel % / kg | `fuel.level` / `fuel.mass` | annex / custom |
 | gear legs up/down + compression | 3 × `WheelState` (`compression`; `gear.down` channel) | direct |
-| nose-wheel steering | `WheelExtended.steerAngle` | direct |
+| nose-wheel steering | `WheelState.steerAngle` | direct |
 | flaps / airbrake / speedbrake | `ctrl.flaps`, `ctrl.airbrake`, `ctrl.speedbrake` | convention channel |
 | IAS / Mach / AoA | `air.*` | convention channel |
 | nav/strobe/landing lights | `lights.*` (landing light ≈ `lights.headlights`) | annex/close |

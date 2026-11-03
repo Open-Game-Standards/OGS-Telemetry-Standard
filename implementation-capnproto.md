@@ -40,7 +40,8 @@ byte for byte against the [conformance corpus](conformance/).
 An **optionality union** is a union whose first-declared variant is a
 `Void` default meaning "not provided" (`noDynamics`, `noRange`,
 `noSuspension`, `noDirection`, `noForce`, `noThrust`, `core`,
-`noGravityVector`, `noLocalGravity`, `noTorque`, `noBrakePressure`). Its
+`noGravityVector`, `noLocalGravity`, `noAtmosphere`, `noTyre`, and every
+`WheelState` measurement's `no…` variant). Its
 default variant therefore has discriminant 0. `DrivePoint`,
 `DrivePointDescriptor` and `ChannelValue` carry the other unions.
 
@@ -141,11 +142,12 @@ kj::Array<capnp::word> buildDiscovery() {
     d.setSessionStartUnixUs(1759843200000000ULL); // wall-clock anchor
 
     Environment::Builder env = d.initEnvironment();
-    env.setAirDensity(1.225f);   // kg/m^3
-    env.setTemperature(20.0f);   // °C
-    env.setPressure(101325.0f);   // Pa
     env.setGravity(9.81f);       // m/s^2
     env.setMedium(ContactMedium::ASPHALT);
+    auto air = env.getAtmosphere().initKnown(); // leave unset without an atmosphere model
+    air.setAirDensity(1.225f);   // kg/m^3
+    air.setTemperature(20.0f);   // °C
+    air.setPressure(101325.0f);  // Pa
 
     auto objects = d.initObjects(1);
     ObjectDescriptor::Builder car = objects[0];
@@ -233,19 +235,19 @@ kj::Array<capnp::word> buildMotion(double timestampSeconds) {
         auto p = points[i];
         p.setId(i);
         WheelState::Builder w = p.initWheel();
-        w.setRpm(1200.0f + i * 10.0f);
-        w.getTorque().setValue(850.0f); // Nm (named union: leave unset when not measured)
-        w.setSlip(0.01f);              // slip ratio
-        w.setCompression(0.04f);       // meters
+        // every measurement is its own named union: set what you measure,
+        // leave the rest unset (never 0 for "unknown")
         w.setContact(ContactMedium::ASPHALT);
-        if (i < 2) {                   // extended data, all-or-neither
-            auto ext = w.initExtended();
-            ext.setSteerAngle(0.02f);  // rad, + = left (ISO)
-            ext.setLoadForce(4200.0f); // N along suspension axis
-            ext.setTyrePressure(110000.0f); // Pa
-            ext.setTyreTemp(88.0f);    // degC carcass
-            ext.setTyreWear(0.97f);    // 1 = new
-        }
+        w.getRpm().setValue(1200.0f + i * 10.0f);
+        w.getSlip().setValue(0.01f);           // slip ratio
+        w.getCompression().setValue(0.04f);    // meters
+        w.getTorque().setValue(850.0f);        // Nm
+        if (i < 2) w.getSteerAngle().setValue(0.02f); // rad, + = right (C-4)
+        w.getLoadForce().setValue(4200.0f);    // N along suspension axis
+        auto tyre = w.initTyre();              // pressure, temperature, wear together
+        tyre.setPressure(110000.0f);           // Pa
+        tyre.setTemperature(88.0f);            // degC carcass
+        tyre.setWear(0.97f);                   // 1 = new
     }
 
     // Channel values: typed, keyed by discovery ids
@@ -307,7 +309,7 @@ Cap'n Proto requires 8-byte word alignment — the UDP envelope is 8 bytes, so a
 ## Wire size
 
 - `MotionFrame`, one object, pose only: ~68 bytes.
-- Four wheels (full extended data) + eight channels ≈ +280 bytes — comfortably within the mandatory 1,400-byte datagram budget at 60 Hz.
+- Four wheels (every measurement and the tyre) + eight channels ≈ +490 bytes — comfortably within the mandatory 1,400-byte datagram budget at 60 Hz.
 - `DiscoveryFrame`: ~300–800 bytes for a typical sender, re-sent every 2 s — strings dominate, so declare channels generously; they cost nothing per frame. A channel descriptor costs roughly 50–120 bytes (name, unit and description dominate), so one page holds ~10–25 channels; larger sets are paged.
 - Simulator-scale senders (hundreds of channels, multi-car grids) stay within the budget through paged discovery, motion parts and bounded refresh ([implementation-udp.md](implementation-udp.md) § Datagram budget).
 

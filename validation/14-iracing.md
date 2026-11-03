@@ -22,14 +22,14 @@ variant).
 | `LatAccel`/`LongAccel`/`VertAccel` | `bodyDynamics.specificForce` | direct |
 | `RollRate`/`PitchRate`/`YawRate` | `bodyDynamics.angularVelocity` | direct |
 | `HF/HRshockDefl` per corner | `WheelState.compression` ×4 | direct |
-| `HF/HRshockVel` per corner | `WheelExtended.damperVelocity` ×4 | direct |
+| `HF/HRshockVel` per corner | `WheelState.damperVelocity` ×4 | direct |
 | `SteeringWheelAngle`, throttle/brake/clutch (raw+processed) | `ctrl.steer/throttle/brake/clutch` channels | annex |
 | `SteeringWheelTorque`/`PctTorque`/`PeakForceNm` | `ctrl.ffb.*` channels (FFB middleware consumes) | custom |
 | `Gear`, `RPM`, `Shift*`, `ManifoldPress`, oil/water/voltage, `Fuel*`, `EnergyERS*`, `PushToPass` | `transmission.*`, `engine.*`, `fuel.*`, `ers.*`, `p2p.*` channels | annex/custom |
 | `TireLF/LR/RF/RR_rumblePitch` | `haptics.rumble.*` channels ×4 | custom |
-| zone tyre temps/pressures/wear | per-corner channels (`wheel.lf.*`) — per-zone data exceeds the carcass average in `WheelExtended` | convention |
+| zone tyre temps/pressures/wear | per-corner channels (`wheel.lf.*`) — per-zone data exceeds the carcass average in `WheelState.tyre` | convention |
 
-`damperVelocity` joins `WheelExtended` on ≥2-game evidence (iRacing
+`damperVelocity` is a `WheelState` field on ≥2-game evidence (iRacing
 shockVel; Dirt 4 / Codemasters-carrier `suspension_velocity` from tests
 10–11) — per-drive-point physics that cannot ride object channels without
 stringly linkage (the `GenericState.force` lesson).
@@ -67,7 +67,7 @@ streams what it has; restarts re-send discovery.
 
 ## Verdict
 
-**Covers** — plus one adoption: `WheelExtended.damperVelocity` (≥2-game
+**Covers** — plus one adoption: `WheelState.damperVelocity` (≥2-game
 evidence). Both dynamics representations, the session-values mechanism,
 and multi-object all exercised by a single documented source.
 

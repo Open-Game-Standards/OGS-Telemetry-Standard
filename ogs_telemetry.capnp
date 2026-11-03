@@ -80,16 +80,27 @@ enum ContactMedium {
 struct Environment {
   # Ambient conditions of the simulation medium. Sent in discovery; may be
   # re-sent on change (e.g. entering water). Units per CONVENTIONS C-3.
+  gravity @0 :Float32;      # m/s^2, magnitude; equals |gravityVector| when that is set
+  medium @1 :ContactMedium; # dominant surrounding medium
+  union {
+    # Gravity direction (CONVENTIONS C-12).
+    noGravityVector @2 :Void;  # default: gravity acts along world -Y, magnitude `gravity`
+    gravityVector @3 :Vector3; # m/s^2, world frame, pointing the way gravity pulls
+  }
+  # Air (or other fluid) state around the primary object. Simulations
+  # model density, temperature and pressure together or not at all, so
+  # they are one all-or-neither bundle; a game without an atmosphere model
+  # leaves the default. Vacuum is `known` with zero density.
+  atmosphere :union {
+    noAtmosphere @4 :Void;     # default: not modelled
+    known @5 :Atmosphere;
+  }
+}
+
+struct Atmosphere {
   airDensity @0 :Float32;   # kg/m^3
   temperature @1 :Float32;  # °C (declared exception, C-3)
   pressure @2 :Float32;     # Pa
-  gravity @3 :Float32;      # m/s^2, magnitude; equals |gravityVector| when that is set
-  medium @4 :ContactMedium; # dominant surrounding medium
-  union {
-    # Gravity direction (CONVENTIONS C-12).
-    noGravityVector @5 :Void;  # default: gravity acts along world -Y, magnitude `gravity`
-    gravityVector @6 :Vector3; # m/s^2, world frame, pointing the way gravity pulls
-  }
 }
 
 # ---------------------------------------------------------------------------
@@ -112,7 +123,8 @@ struct DiscoveryFrame {
   generation @5 :UInt32;           # descriptor-set generation, kept by every sender:
                                    # increments by one (wrapping) whenever any id,
                                    # name, unit, range, drive point or object identity
-                                   # changes, never for session `values` alone.
+                                   # changes (a channel's type included), never for
+                                   # session `values` or `texts` alone.
                                    # MotionFrame.generation names the set its ids
                                    # refer to.
   page @6 :UInt16;                 # 0-based index of this page within the generation
@@ -125,13 +137,16 @@ struct DiscoveryFrame {
   instanceLabel @8 :Text;          # user-set label for this instance, e.g. "Rig 2",
                                    # "Instructor"; "" = none
   host @9 :Text;                   # sender's host name, e.g. "sim-pc"; "" = not given
+                                   # Both stay fixed for a session: a sender that
+                                   # changes them starts a new session (new
+                                   # sessionStartUnixUs).
 }
 
 struct ObjectDescriptor {
   # In a paged generation an object may be listed on several pages. The
   # lowest-numbered page listing it carries its full identity (type through
-  # drivePoints); later pages listing it carry only further channels and
-  # values, and receivers merge them by name. A channel id is declared on
+  # drivePoints); later pages listing it carry only further channels,
+  # values and texts, and receivers merge them by name. A channel id is declared on
   # exactly one page of a generation.
   name @0 :Text;                   # stable per session; matches MotionObject.name
   type @1 :ObjectType;             # coarse class; ratifiable enum
@@ -267,7 +282,8 @@ struct MotionFrame {
   # datagram is sent as parts sharing this timestamp. Each object's pose,
   # dynamics, localGravity and drive points ride the first part listing it in
   # the tick (the primary object's ride part 0); a later part listing the same
-  # object carries channel values only, and receivers ignore its other fields.
+  # object carries channel and text values only, and receivers ignore its
+  # other fields.
   part @3 :UInt16;                 # 0-based index of this part within the tick
   partCount @4 :UInt16;            # parts carrying this tick; 0 or 1 = single datagram
 }
@@ -337,39 +353,56 @@ struct DrivePoint {
 }
 
 struct WheelState {
-  rpm @0 :Float32;                # rpm (declared exception, C-3)
-  slip @1 :Float32;                # slip ratio, 0 = rolling
-  compression @2 :Float32;         # current suspension compression, meters
-  contact @3 :ContactMedium;
+  # Every measured quantity is optional on its own: sources expose very
+  # different subsets (aircraft gear: compression only; arcade physics:
+  # rpm and contact). A named union per field keeps absence (the Void
+  # default) distinct from a real zero; inside a selected value, zeros are
+  # real readings.
+  contact @0 :ContactMedium;       # `other` = unknown
   union {
-    # Per-wheel extras arrive whole in practice (AC/iRacing-style physics
-    # pages) or not at all — all-or-neither also fits Cap'n Proto's
-    # single-unnamed-union rule. Inside extended, zeros are real values.
-    core @4 :Void;                 # default: core fields only
-    extended @5 :WheelExtended;    # steer angle, load force, tyre data
+    noTyre @1 :Void;               # default: no tyre model
+    tyre @2 :TyreState;            # pressure, temperature, wear
   }
-
-  # Drive torque and brake pressure are measured independently and many
-  # sources have neither (aircraft gear, arcade physics), so each is its
-  # own named optionality union: absence is the Void default, never 0.
+  rpm :union {
+    noRpm @3 :Void;
+    value @4 :Float32;             # rpm (declared exception, C-3)
+  }
+  slip :union {
+    noSlip @5 :Void;
+    value @6 :Float32;             # slip ratio, 0 = rolling
+  }
+  compression :union {
+    noCompression @7 :Void;
+    value @8 :Float32;             # current suspension compression, meters
+  }
+  steerAngle :union {
+    noSteerAngle @9 :Void;
+    value @10 :Float32;            # rad, road wheel; + = right, same sense as +yaw (C-4, C-6)
+  }
+  loadForce :union {
+    noLoadForce @11 :Void;
+    value @12 :Float32;            # N along the suspension axis, measured (incl. damping)
+  }
+  damperVelocity :union {
+    noDamperVelocity @13 :Void;
+    value @14 :Float32;            # m/s, + = compressing (iRacing shockVel, Dirt 4
+                                   # suspension_velocity)
+  }
   torque :union {
-    noTorque @6 :Void;             # default: not measured
-    value @7 :Float32;             # Nm, drive torque at this wheel
+    noTorque @15 :Void;
+    value @16 :Float32;            # Nm, drive torque at this wheel
   }
   brakePressure :union {
-    noBrakePressure @8 :Void;      # default: not measured
-    value @9 :Float32;             # Pa
+    noBrakePressure @17 :Void;
+    value @18 :Float32;            # Pa
   }
 }
 
-struct WheelExtended {
-  steerAngle @0 :Float32;          # rad; positive = right, same sense as +yaw (C-4)
-  loadForce @1 :Float32;           # N along suspension axis, measured (incl. damping)
-  damperVelocity @2 :Float32;      # m/s compression rate (iRacing shockVel, Dirt 4
-                                   # suspension_velocity — ≥2-game evidence)
-  tyrePressure @3 :Float32;        # Pa
-  tyreTemp @4 :Float32;            # °C (C-3), carcass/average (zone temps → channels)
-  tyreWear @5 :Float32;            # 0..1 fraction remaining (1 = new)
+struct TyreState {
+  # Tyre models report pressure, temperature and wear together.
+  pressure @0 :Float32;            # Pa
+  temperature @1 :Float32;         # °C (C-3), carcass/average (zone temps → channels)
+  wear @2 :Float32;                # 0..1 fraction remaining (1 = new)
 }
 
 struct PropellerState {

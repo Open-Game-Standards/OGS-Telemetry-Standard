@@ -22,7 +22,7 @@
 | fuel flow / tank quantity | `fuel.rate` / `fuel.level` | annex |
 | mixture, oil temp/pressure | `mixture.*`, `engine.oilTemp`… | custom channel |
 | gear compression (X-Plane per-gear deflection) | `WheelState.compression` ×3 | direct |
-| nose-gear steer angle | `WheelExtended.steerAngle` | direct |
+| nose-gear steer angle | `WheelState.steerAngle` | direct |
 | gear position 0..1 | `gear.down` | convention channel |
 | aileron/elevator/rudder/flaps/spoilers | `ctrl.*` | convention channel |
 | airspeed TAS/IAS, AoA, Mach | `air.*` | convention channel |

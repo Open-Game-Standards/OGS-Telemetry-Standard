@@ -30,14 +30,17 @@ what got fixed) lives exclusively in the knowledge base.**
 - `ogs_telemetry.capnp` is the single source of truth. A JSON
   mirror, if ever needed for tooling, must be *generated* from the capnp —
   never hand-maintained.
-- **Optionality rule**: optional measured quantities use a single unnamed
-  union with a `Void` default variant ("not provided"), declared first so
-  it is discriminant 0 — a zero-initialized union means "not provided". Multi-field
-  optionals bundle all-or-neither into a sub-struct (`WheelExtended`,
-  `PropellerExtended`). A struct whose unnamed union is already taken
-  uses a named union of the same shape (`MotionObject.localGravity`).
-  Never introduce sentinel values — zeros are real
-  readings; Cap'n Proto struct fields are inline and not nullable.
+- **Optionality rule**: optional measured quantities use a union with a
+  `Void` default variant ("not provided"), declared first so it is
+  discriminant 0 — a zero-initialized union means "not provided". A
+  struct's one unnamed union takes the first optional; further ones are
+  named unions of the same shape (`MotionObject.localGravity`,
+  `WheelState.rpm`). Quantities sources report together bundle
+  all-or-neither into a sub-struct (`TyreState`, `Atmosphere`,
+  `PropellerExtended`); quantities sources report independently get a
+  union each (every `WheelState` measurement). Never introduce sentinel
+  values — zeros are real readings; Cap'n Proto struct fields are inline
+  and not nullable.
 - **Evolution**: adding fields, enum values, or union variants is v1.x-safe
   (unknown-field/unknown-discriminant skipping); renaming or renumbering
   existing fields is a major revision.

@@ -15,8 +15,8 @@
 | engine rpm / gear / throttle / brake / clutch | `engine.rpm`, `transmission.gear`, `engine.throttle`, `brakes.pedal`, `input.clutch` | annex |
 | front/rear wheel angular speed | `WheelState.rpm` ×2 | direct |
 | fork / shock travel | `WheelState.compression` ×2 | direct |
-| steering (rider input vs fork angle) | `steering.input` (channel, %) and `WheelExtended.steerAngle` (front wheel, rad) | annex / direct |
-| tyre temp / pressure / wear / slip | `WheelExtended.tyre*` + `WheelState.slip` | direct |
+| steering (rider input vs fork angle) | `steering.input` (channel, %) and `WheelState.steerAngle` (front wheel, rad) | annex / direct |
+| tyre temp / pressure / wear / slip | `WheelState.tyre` + `WheelState.slip` | direct |
 | rider hang-off / body position | second `humanoid` object's `position`/`orientation` | direct |
 
 ## Notes

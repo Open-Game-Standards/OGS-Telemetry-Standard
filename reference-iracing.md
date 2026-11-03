@@ -18,14 +18,14 @@ values must never be guessed onto the wire.
 | `bodyDynamics.specificForce` | `LatAccel`/`LongAccel`/`VertAccel` † | direct if m/s²; ×9.80665 if G; verify at capture |
 | `bodyDynamics.angularVelocity` | `RollRate`/`PitchRate`/`YawRate` † (rad/s) | direct |
 | wheel drive points `compression` | `LF/RF/LR/RRshockDefl` † (docs list `HF/HR` front/rear pairs + `_st` steering-linked variants — capture-verify corner mapping) | m, direct |
-| `WheelExtended.damperVelocity` | `*shockVel` † | m/s, direct |
+| `WheelState.damperVelocity` | `*shockVel` † | m/s, direct |
 | `ContactMedium` per object | `PlayerTrackSurfaceMaterial` / `CarIdxTrackSurfaceMaterial` (material enum → medium map) | recipe |
 | `Environment.temperature` | `TrackTemp` (°C) | direct |
 | `referencePoint` | irsdk reports vehicle-frame data at the physics reference — declare what the capture shows (typically CG) | declaration |
 
 ## Channel reference
 
-Cadence: **stream** = per-tick; **session** = discovery `values`.
+Cadence: **stream** = per-tick; **session** = discovery `values`, or `texts` for text (the YAML strings).
 
 ### Geo (stream, throttled)
 `position.lat`/`position.lon` (deg, `Lat`/`Lon`), `position.altMsl` (m,
@@ -61,7 +61,7 @@ rumblePitch`), session: `tyre.compound` (`PlayerTireCompound`),
 `lap.lastTime`, `lap.bestTime`, `lap.distPct` (`LapDistPct`), and the
 `LapDelta*` family (`…toBestLap/…toOptimalLap`, `_ok` validity bools).
 
-### Session & weather (session `values`; stream when dynamic)
+### Session & weather (session `values`/`texts`; stream when dynamic)
 `session.num`/`state`/`lapsRemain`/`lapsTotal`/`timeRemain`/`timeOfDay`
 (`Session*`), `session.uniqueId` (`SessionUniqueID` — identity anchor),
 `pit.stopActive`, `pit.repairLeft`, `pits.open`, `weather.trackTemp`,
@@ -81,11 +81,11 @@ also ride a channel. `SessionTick`/`SessionTime`/`FrameRate` stream
 
 | YAML section | OGS-TS home |
 |---|---|
-| `WeekendInfo` (weather type, wind, commercial/team modes, track size) | session `values` on the primary object |
-| `SessionInfo` (session type, results, laps) | session `values` |
+| `WeekendInfo` (weather type, wind, commercial/team modes, track size) | session `values`/`texts` on the primary object |
+| `SessionInfo` (session type, results, laps) | session `values`/`texts` |
 | `DriverInfo` (driver/car entries per CarIdx) | **per-car object descriptors** (name, car number, typeLabel) for the multi-object grid |
-| `QualifyResultsInfo` | session `values` |
-| `CameraInfo`, `RadioInfo`, `SplitTimeInfo` | session `values` (consumer-UI features; SplitTime sectors may also stream `lap.sector*`) |
+| `QualifyResultsInfo` | session `values`/`texts` |
+| `CameraInfo`, `RadioInfo`, `SplitTimeInfo` | session `values`/`texts` (consumer-UI features; SplitTime sectors may also stream `lap.sector*`) |
 
 ## Multi-car grid
 

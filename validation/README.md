@@ -21,7 +21,7 @@ Results so far:
 
 | Test | Domains | Verdict |
 |---|---|---|
-| [01-race-car.md](01-race-car.md) | AC-style + iRacing-style car | Covers cleanly — per-wheel dynamics incl. extended data land in `WheelState` |
+| [01-race-car.md](01-race-car.md) | AC-style + iRacing-style car | Covers cleanly — per-wheel dynamics incl. tyre data land in `WheelState` |
 | [02-prop-aircraft.md](02-prop-aircraft.md) | MSFS SimConnect + X-Plane datarefs | Covers — gear as wheels; `ctrl.*`/`wind.*`/`air.*` channel families |
 | [03-jet.md](03-jet.md) | DCS-style export | Covers — optional thrust; %RPM as its own channel |
 | [04-sailboat.md](04-sailboat.md) | Sailaway-style | Covers — multi-sail via drive points; wind rides `wind.*` channels |

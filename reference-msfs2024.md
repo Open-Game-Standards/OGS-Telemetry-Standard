@@ -17,7 +17,7 @@ Source variables: the MSFS 2024 SDK SimVar set (1,354 documented names).
 | `kinematics.acceleration` | `ACCELERATION_WORLD_X/Y/Z` | ft/s² → m/s² ×0.3048 |
 | `bodyDynamics.specificForce` | `ACCELERATION_BODY_X/Y/Z` | ft/s² → m/s²; then `f = a − R(q)·g` (at rest reads +9.81 heave) |
 | `bodyDynamics.angularVelocity` | `ROTATION_VELOCITY_BODY_X/Y/Z` | rad/s, direct |
-| `Environment.airDensity/temperature/pressure/gravity` | `AMBIENT DENSITY/TEMPERATURE/PRESSURE`, planet gravity | SI |
+| `Environment.atmosphere.known` (airDensity, temperature, pressure), `Environment.gravity` | `AMBIENT DENSITY/TEMPERATURE/PRESSURE`, planet gravity | SI |
 | `namedPoints` | `STRUCT_EYEPOINT_*`, `STRUCT_ENGINE_POSITION` | object-local m |
 | wheel drive points (`rpm`, `slip`, `contact`, `steerAngle`) | `CENTER/LEFT/RIGHT WHEEL RPM`, `GEAR SKIDDING FACTOR`, `SIM ON GROUND` + surface, `GEAR_*_STEER_ANGLE` | steerAngle + = right per CONVENTIONS C-4 — sign-verify against the sim; unit is rad (watch the DEGREES-named neighbours) |
 | jet drive point (`throttle`) | `GENERAL ENG THROTTLE LEVER POSITION` | 0..1 direct |
@@ -30,7 +30,7 @@ not the receiver, absorbs doc quirks.
 ## Channel reference
 
 Cadence: **stream** = per-tick in `MotionObject.channels`; **session** =
-current value in `ObjectDescriptor.values` (discovery, re-sent on change).
+current value in `ObjectDescriptor.values`, or `texts` for text channels (discovery, re-sent on change).
 
 ### Position / geo (stream, throttled)
 | Channel | Type | Unit | SimVar |

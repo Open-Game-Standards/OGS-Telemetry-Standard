@@ -14,7 +14,7 @@ datarefs through a plugin (XPLM), UDP `RREF` subscriptions, or the X-Plane
 12 Web API (`/api/v3`, which also serves byte-array strings).
 
 The reference curates the datarefs that motion, haptics, instruments,
-environment and cockpit-state consumers use: ~125 channel names, ~180
+environment and cockpit-state consumers use: ~120 channel names, ~170
 values for a twin-engine aircraft with three gear. A sender can publish further datarefs
 as channels (see *Further datarefs*).
 
@@ -38,9 +38,9 @@ Aircraft coordinates are +x right, +y up, +z aft, relative to the CG.
 | `bodyDynamics.specificForce` | `sim/flightmodel/forces/g_side`, `g_nrml`, `g_axil` | ×9.80665 → (x, y, z) = (side, normal, axial). Verify each sign against the sim at capture: level at rest reads ≈ (0, +9.81, 0), a take-off roll reads +z, a coordinated turn reads x ≈ 0 |
 | `bodyDynamics.angularVelocity` | `sim/flightmodel/position/Qrad`, `Rrad`, `Prad` | rad/s, direct: x = pitch (Q), y = yaw (R), z = roll (P). Sign-verify against C-4 |
 | `kinematics` (alternative) | `local_vx/vy/vz`, `local_ax/ay/az` | (x, y, −z). The XOR rule allows one representation; emit `bodyDynamics` |
-| `Environment.airDensity` | `sim/weather/rho` | kg/m³, direct |
-| `Environment.temperature` | `sim/weather/aircraft/temperature_ambient_deg_c` | degC, direct |
-| `Environment.pressure` | `sim/weather/aircraft/barometer_current_pas` | Pa, direct |
+| `Environment.atmosphere.known.airDensity` | `sim/weather/rho` | kg/m³, direct |
+| `….temperature` | `sim/weather/aircraft/temperature_ambient_deg_c` | degC, direct |
+| `….pressure` | `sim/weather/aircraft/barometer_current_pas` | Pa, direct |
 | `Environment.gravity` | `sim/weather/aircraft/gravity_mss` | m/s², direct |
 | `Environment.medium` | — | `air` |
 | `namedPoints` | `sim/graphics/view/pilots_head_x/y/z` | `"pilot"`, (x, y, −z), m |
@@ -65,11 +65,10 @@ One `wheel` drive point per gear `i` where `sim/aircraft/parts/acf_gear_type[i]`
 | `WheelState.slip` | `sim/flightmodel2/gear/tire_skid_ratio[i]` | 0 = full traction … 1 = full skid. A magnitude, not a signed slip ratio |
 | `WheelState.compression` | `sim/flightmodel2/gear/tire_vertical_deflection_mtr[i]` | m |
 | `WheelState.contact` | `sim/flightmodel2/gear/on_ground[i]`, `sim/flightmodel/ground/surface_texture_type` | off ground → `air`; on ground: Concrete/Asphalt/Shoulder/Blastpad → `asphalt`, grass → `grass`, Dirt/Ground → `dirt`, Gravel → `gravel`, Water/Lake → `water`, Snow → `snow`, other → `other` |
-| `WheelState.torque`, `brakePressure` | — | X-Plane exposes neither: left at `noTorque` / `noBrakePressure` |
-
-Wheels use the `core` variant. `WheelExtended` is all-or-neither, and
-X-Plane has no tyre pressure, temperature or wear, so steer angle, load and
-damper velocity ride channels (*Gear*).
+| `WheelState.steerAngle` | `sim/flightmodel2/gear/tire_steer_actual_deg[i]` | deg → rad, + = right (C-4) |
+| `WheelState.loadForce` | `sim/flightmodel2/gear/tire_vertical_force_n_mtr[i]` | N (newtons, despite the unit label) |
+| `WheelState.damperVelocity` | `sim/flightmodel2/gear/total_deflection_rate[i]` | m/s, + = compressing |
+| `WheelState.torque`, `brakePressure`, `tyre` | — | X-Plane exposes none: left unset (`noTorque`, `noBrakePressure`, `noTyre`) |
 
 ### Propeller and jet drive points
 
@@ -93,7 +92,7 @@ carb (0), recip injected (1), electric (3) and turboprops (9, 10) are
 ## Channel reference
 
 Cadence: **stream** = per-tick in `MotionObject.channels`; **session** =
-current value in `ObjectDescriptor.values` (discovery, re-sent on change).
+current value in `ObjectDescriptor.values`, or `texts` for text channels (discovery, re-sent on change).
 Per-instance channels use 1-based index suffixes (`engine[1].n1` reads
 dataref element 0), as in the MSFS 2024 reference.
 
@@ -167,9 +166,6 @@ dataref element 0), as in the MSFS 2024 reference.
 | Channel | Unit | Dataref |
 |---|---|---|
 | `gear[n].position` | 0..1 | `sim/flightmodel2/gear/deploy_ratio[n−1]` |
-| `gear[n].steerAngle` | rad | `sim/flightmodel2/gear/tire_steer_actual_deg[n−1]`, + = right (C-4) |
-| `gear[n].loadForce` | N | `sim/flightmodel2/gear/tire_vertical_force_n_mtr[n−1]` (newtons, despite the unit label) |
-| `gear[n].damperVelocity` | m/s | `sim/flightmodel2/gear/total_deflection_rate[n−1]`, + = compressing |
 | `gear[n].brake` | 0..1 | `sim/flightmodel2/gear/tire_part_brake[n−1]` |
 | `gear.force.x/y/z` | N | `sim/flightmodel/forces/fside_gear`, `fnrml_gear`, −`faxil_gear` (ground reaction, body axes; `faxil` is positive aft) |
 
@@ -313,11 +309,11 @@ look it up in the X-Plane catalogue.
   plane", enums, bitfields) is declared with unit `""` and a description
   saying the value is as sent, with its meaning.
 - Arrays are index-suffixed (`…[1]` for element 0).
-- Rarely-changing datarefs ride session `values`.
+- Rarely-changing datarefs ride session `values` (`texts` for strings).
 
 ## Sender notes
 
-- **Catalogue size.** The curated set is ~125 names and ~180 values for
+- **Catalogue size.** The curated set is ~120 names and ~170 values for
   a twin, so discovery is ~20 KB in ~15 pages (~10 KB/s at the
   2-second re-send): paged discovery, motion parts and
   bounded refresh carry it (implementation-udp.md § Datagram budget).
