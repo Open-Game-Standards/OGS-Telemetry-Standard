@@ -29,13 +29,13 @@ representative, not exhaustive; the goal is coverage classification.
 | fuel | `fuel.level` | annex |
 | tcEnabled / absEnabled | `aids.tcs` / `aids.abs` | annex |
 | per-wheel rpm | `WheelState.rpm` ×4 | direct |
-| per-wheel drive torque | `WheelState.torque` | direct |
+| per-wheel drive torque | `WheelState.torque.value` | direct |
 | per-wheel slip ratio / slip angle | `WheelState.slip` | direct |
 | suspension travel / deflection | `WheelState.compression` | direct |
 | per-wheel steering angle (AC `wheelAngl`) | `WheelExtended.steerAngle` (rad, + = left, ISO) | direct |
 | suspension force / tyre vertical load (AC `susForce`/`tyreLoad`) | `WheelExtended.loadForce` (N along suspension axis, measured) | direct |
 | tyre pressure / temps / wear (iRacing 3-temp patches, wear %) | `WheelExtended.tyrePressure` / `tyreTemp` (carcass/average; zone temps → channels) / `tyreWear` (1 = new) | direct |
-| per-wheel brake pressure | `WheelState.brakePressure` | direct |
+| per-wheel brake pressure | `WheelState.brakePressure.value` | direct |
 | car damage (AC array) | `damage.*` channels | custom channel |
 | drs state | `aids.drs` | custom channel (annex candidate) |
 | lap / position / lap time / session | — | out of scope (race state deferred by design) |

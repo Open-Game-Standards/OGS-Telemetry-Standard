@@ -31,7 +31,7 @@ A descriptor set that does not fit one datagram is split into **pages**: `Discov
 - An object's identity (type, location, typeLabel, primary, reference and named points, drive points) rides the lowest-numbered page that lists the object. Later pages listing it carry only further `channels` and `values`.
 - Each channel id is declared on exactly one page of a generation.
 - Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
-- A change to session `values` re-sends only the page carrying them.
+- A change to session `values` or `texts` re-sends only the page carrying them.
 
 Receivers merge the pages of a generation by object name and channel id; each page is usable as soon as it arrives, with no need to wait for the rest. A frame with a different `generation` (or a new `sessionStartUnixUs`) starts a new descriptor set. Receivers keep the previous generation's tables while motion frames still carry its `generation`, so a vehicle swap never misreads ids. An unpaged frame (`pageCount` 0 or 1) replaces the descriptor set whole.
 
@@ -64,7 +64,7 @@ The envelope comes to ~105 KB/s. On an access point that sends multicast at a 6 
 Before cutting channels, a large sender uses the savings the format already allows:
 
 - **Changed values only.** Absence means unchanged, so a value rides a motion frame only when it changes, plus the bounded refresh (§ Bounded refresh) that heals loss and serves late joiners.
-- **Session values for what rarely changes.** Switches, lights, radio frequencies, autopilot settings and identity strings go in `ObjectDescriptor.values` (DESIGN.md § Two channel cadences). They cost nothing per tick and travel in discovery only when they change.
+- **Session values for what rarely changes.** Switches, lights, radio frequencies, autopilot settings and identity strings go in `ObjectDescriptor.values` and `texts` (DESIGN.md § Two channel cadences). They cost nothing per tick and travel in discovery only when they change.
 - **Descriptions where they carry meaning.** A description is display text that nothing binds on. Keep it where name and unit do not explain the value (enums, bitfields, values passed on as the game sends them, unknown units) and leave it empty where it would restate the name.
 - **Nothing for what is not there.** Empty lists stay null, unset optionality unions stay at their `Void` default, and a paused sender sends `noDynamics` (CONVENTIONS C-11); canonical encoding (implementation-capnproto.md § Encoding rules) then spends no bytes on them.
 

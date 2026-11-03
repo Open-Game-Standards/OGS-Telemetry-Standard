@@ -23,7 +23,7 @@ against both cadences.
 | high-frequency value | `ChannelValue` in `MotionObject.channels` per tick; ids cost 2 bytes; absence = unchanged (receivers hold latest known per id) |
 | session value | current value in `ObjectDescriptor.values`; a change re-sends discovery, so **late joiners get complete session state from discovery alone** |
 | session-global (no owning object) | attaches to the primary object's channel set |
-| labels / mode names | text-valued channel, naturally in `values` |
+| labels / mode names | text-valued channel, naturally in session `texts` |
 | future datapoint kinds | channels are data, not schema — v1.x additions never gate them |
 
 Evidence anchors from the validated set: streamed — F1

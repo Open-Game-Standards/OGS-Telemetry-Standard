@@ -156,8 +156,8 @@ struct ObjectDescriptor {
                                    # alone. Fast-changing channels stream in
                                    # MotionObject.channels instead; a channel
                                    # lives in one layer — moving it re-sends
-                                   # lives in one layer — moving it re-sends
                                    # discovery.
+  texts @10 :List(TextValue);      # current values of session-scoped text channels
 }
 
 struct NamedPoint {
@@ -186,7 +186,7 @@ struct ChannelDescriptor {
     range @4 :Range;               # declared operating range
   }
   description @5 :Text;            # human-readable, shown by dash tools
-  type @6 :ChannelType;             # which ChannelValue variant carries this channel
+  type @6 :ChannelType;             # number/boolean ride ChannelValue, text rides TextValue
 }
 
 enum ChannelType {
@@ -293,6 +293,7 @@ struct MotionObject {
 
   drivePoints @6 :List(DrivePoint);   # only points with state this tick
   channels @7 :List(ChannelValue);    # only channels that changed / are streamed
+  texts @10 :List(TextValue);         # text channel values, same rules as channels
 
   # Gravity at this object, when it differs from the environment's (planet
   # surfaces, rotating habitats, multi-body scenes). A named union, since the
@@ -337,17 +338,27 @@ struct DrivePoint {
 
 struct WheelState {
   rpm @0 :Float32;                # rpm (declared exception, C-3)
-  torque @1 :Float32;              # Nm
-  brakePressure @2 :Float32;       # Pa
-  slip @3 :Float32;                # slip ratio, 0 = rolling
-  compression @4 :Float32;         # current suspension compression, meters
-  contact @5 :ContactMedium;
+  slip @1 :Float32;                # slip ratio, 0 = rolling
+  compression @2 :Float32;         # current suspension compression, meters
+  contact @3 :ContactMedium;
   union {
     # Per-wheel extras arrive whole in practice (AC/iRacing-style physics
     # pages) or not at all — all-or-neither also fits Cap'n Proto's
     # single-unnamed-union rule. Inside extended, zeros are real values.
-    core @6 :Void;                 # default: core fields only
-    extended @7 :WheelExtended;    # steer angle, load force, tyre data
+    core @4 :Void;                 # default: core fields only
+    extended @5 :WheelExtended;    # steer angle, load force, tyre data
+  }
+
+  # Drive torque and brake pressure are measured independently and many
+  # sources have neither (aircraft gear, arcade physics), so each is its
+  # own named optionality union: absence is the Void default, never 0.
+  torque :union {
+    noTorque @6 :Void;             # default: not measured
+    value @7 :Float32;             # Nm, drive torque at this wheel
+  }
+  brakePressure :union {
+    noBrakePressure @8 :Void;      # default: not measured
+    value @9 :Float32;             # Pa
   }
 }
 
@@ -417,12 +428,20 @@ struct WingState {
 }
 
 struct ChannelValue {
+  # Numbers and booleans: data only, so a list of them is 8 bytes per
+  # value. Text values ride TextValue lists beside them.
   id @0 :UInt16;                   # matches ChannelDescriptor.id
   union {
     number @1 :Float32;
     boolean @2 :Bool;
-    text @3 :Text;                 # rare (labels, mode names); avoid per-frame
   }
+}
+
+struct TextValue {
+  # The value of a text channel (labels, mode names). Rare in motion
+  # frames; session text (track, vehicle names) rides discovery.
+  id @0 :UInt16;                   # matches ChannelDescriptor.id
+  text @1 :Text;
 }
 
 # ---------------------------------------------------------------------------

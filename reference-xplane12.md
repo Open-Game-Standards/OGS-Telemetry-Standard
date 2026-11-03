@@ -65,7 +65,7 @@ One `wheel` drive point per gear `i` where `sim/aircraft/parts/acf_gear_type[i]`
 | `WheelState.slip` | `sim/flightmodel2/gear/tire_skid_ratio[i]` | 0 = full traction … 1 = full skid. A magnitude, not a signed slip ratio |
 | `WheelState.compression` | `sim/flightmodel2/gear/tire_vertical_deflection_mtr[i]` | m |
 | `WheelState.contact` | `sim/flightmodel2/gear/on_ground[i]`, `sim/flightmodel/ground/surface_texture_type` | off ground → `air`; on ground: Concrete/Asphalt/Shoulder/Blastpad → `asphalt`, grass → `grass`, Dirt/Ground → `dirt`, Gravel → `gravel`, Water/Lake → `water`, Snow → `snow`, other → `other` |
-| `WheelState.torque`, `brakePressure` | — | X-Plane exposes neither; senders send 0 (see *Sender notes*) |
+| `WheelState.torque`, `brakePressure` | — | X-Plane exposes neither: left at `noTorque` / `noBrakePressure` |
 
 Wheels use the `core` variant. `WheelExtended` is all-or-neither, and
 X-Plane has no tyre pressure, temperature or wear, so steer angle, load and
@@ -333,9 +333,8 @@ look it up in the X-Plane catalogue.
   joystick, TCAS). A sender reports what X-Plane reports and does not
   interpret overrides.
 - **Missing wheel quantities.** X-Plane has no wheel torque or brake
-  pressure; `WheelState.torque` and `brakePressure` carry 0, which
-  receivers cannot tell from a real zero. Braking intensity is
-  `gear[n].brake`.
+  pressure, so wheels leave both unset (`noTorque`, `noBrakePressure`);
+  braking intensity is `gear[n].brake`.
 - **Sign checks.** Verify the specific-force and angular-rate signs, the
   `wind.x/y/z` direction and `air.turnBall` against the sim at capture,
   before trusting the conversions above.

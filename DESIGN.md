@@ -160,8 +160,9 @@ state (`WheelState`, `PropellerState`, `JetState`, `SailState`, `LegState`,
   `rpm` and a range, `headlights` as a boolean, `gear` as a number) and then
   streams bare values keyed by the descriptor's id.
 - Receivers can render, normalize, and range-check channels without any prior
-  knowledge of the game: unit and min/max come from the descriptor, type comes
-  from the value's union variant (number/boolean/text).
+  knowledge of the game: unit, min/max and value type come from the
+  descriptor; numbers and booleans ride `ChannelValue`, text rides
+  `TextValue`.
 - Drive points without a dedicated variant use `generic`: the descriptor states
   the geometry it can, and actual values travel as named channels.
 
@@ -219,7 +220,9 @@ channels if a game ever exposes it.
   comment, not banned; dashboards sometimes need label changes. The
   descriptor declares the value type, so a receiver can lay out and bind a
   channel before its first value; a value whose variant differs from a
-  declared type is dropped.
+  declared type is dropped. Text values ride their own `TextValue` lists
+  (`texts` beside `channels` and session `values`), so `ChannelValue` is
+  data only and a list of numbers and booleans costs 8 bytes per value.
 - **Two channel cadences.** Custom datapoints come in two speeds, and the
   layer follows the cadence (the same principle that splits discovery from
   motion):
@@ -231,7 +234,7 @@ channels if a game ever exposes it.
     that interval.
   - *Session channels*: rarely-changing values (setup, session type, stage
     name, weather preset, labels) carry their current value in
-    `ObjectDescriptor.values`. A change re-sends discovery, so a receiver
+    `ObjectDescriptor.values` (text channels in `texts`). A change re-sends discovery, so a receiver
     that joins mid-session learns every session value from discovery alone;
     the delta stream never strands late joiners. This is where text labels
     naturally live.
@@ -335,7 +338,9 @@ channels if a game ever exposes it.
   "not measured" via a single unnamed-union variant with a `Void` default:
   Cap'n Proto structs allow only one unnamed union, so multi-field
   optionals bundle into one all-or-neither sub-struct (`WheelExtended`,
-  `PropellerExtended`). Senders must not claim a variant with sentinel
+  `PropellerExtended`). Quantities measured independently of each other
+  get a named union each: `WheelState.torque` and `brakePressure`, which
+  many sources (aircraft gear, arcade physics) lack. Senders must not claim a variant with sentinel
   values; zeros inside measured fields are real readings. Recorded
   conventions live in [CONVENTIONS.md](CONVENTIONS.md): tyre wear 1 = new;
   tyre temp carcass/average °C; `SuspensionSpec.damping` 0 = unspecified

@@ -40,7 +40,7 @@ byte for byte against the [conformance corpus](conformance/).
 An **optionality union** is a union whose first-declared variant is a
 `Void` default meaning "not provided" (`noDynamics`, `noRange`,
 `noSuspension`, `noDirection`, `noForce`, `noThrust`, `core`,
-`noGravityVector`, `noLocalGravity`). Its
+`noGravityVector`, `noLocalGravity`, `noTorque`, `noBrakePressure`). Its
 default variant therefore has discriminant 0. `DrivePoint`,
 `DrivePointDescriptor` and `ChannelValue` carry the other unions.
 
@@ -234,8 +234,7 @@ kj::Array<capnp::word> buildMotion(double timestampSeconds) {
         p.setId(i);
         WheelState::Builder w = p.initWheel();
         w.setRpm(1200.0f + i * 10.0f);
-        w.setTorque(850.0f);           // Nm
-        w.setBrakePressure(0.0f);      // Pa
+        w.getTorque().setValue(850.0f); // Nm (named union: leave unset when not measured)
         w.setSlip(0.01f);              // slip ratio
         w.setCompression(0.04f);       // meters
         w.setContact(ContactMedium::ASPHALT);
@@ -290,9 +289,9 @@ void onMotion(kj::ArrayPtr<const capnp::word> words) {
             switch (v.which()) {
                 case ChannelValue::NUMBER:  /* v.getNumber() */ break;
                 case ChannelValue::BOOLEAN: /* v.getBoolean() */ break;
-                case ChannelValue::TEXT:    /* v.getText() */ break;
             }
         }
+        for (TextValue::Reader t : obj.getTexts()) { /* t.getId(), t.getText() */ }
         for (DrivePoint::Reader p : obj.getDrivePoints()) {
             if (p.which() == DrivePoint::WHEEL) {
                 WheelState::Reader w = p.getWheel();
