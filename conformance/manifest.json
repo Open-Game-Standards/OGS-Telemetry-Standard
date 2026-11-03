@@ -1,5 +1,5 @@
 {
-  "corpusVersion": 7,
+  "corpusVersion": 8,
   "schemaVersion": 1,
   "envelope": {
     "magic": "OMT1",
@@ -382,7 +382,7 @@
                 "type": "number"
               }
             ],
-            "values": [
+            "texts": [
               {
                 "id": 1,
                 "text": "Test Ring"
@@ -472,6 +472,41 @@
         ],
         "instanceLabel": "Rig 2",
         "host": "sim-pc"
+      }
+    },
+    {
+      "id": "motion-wheel",
+      "file": "vectors/motion-wheel.hex",
+      "frameType": "motion",
+      "description": "Wheel drive point measuring torque but not brake pressure: named optionality unions torque.value selected, brakePressure left at noBrakePressure",
+      "input": {
+        "timestamp": 8.25,
+        "objects": [
+          {
+            "name": "obj",
+            "position": {
+              "x": 2,
+              "y": 0.5,
+              "z": 1
+            },
+            "orientation": {
+              "w": 1
+            },
+            "drivePoints": [
+              {
+                "wheel": {
+                  "rpm": 1200,
+                  "slip": 0.0625,
+                  "compression": 0.03125,
+                  "contact": "asphalt",
+                  "torque": {
+                    "value": 850
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     }
   ]

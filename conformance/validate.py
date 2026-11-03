@@ -53,12 +53,13 @@ def main():
         sys.exit(1)
     check("manifest schemaVersion 1", manifest["schemaVersion"] == 1)
     ids = [v["id"] for v in manifest["vectors"]]
-    check("fifteen known vectors", ids == [
+    check("sixteen known vectors", ids == [
         "discovery-minimal", "discovery-channels", "motion-pose",
         "motion-channels", "motion-multi", "motion-bodydynamics",
         "event-impact", "discovery-gravity-vector", "motion-local-gravity",
         "motion-local-gravity-zero", "discovery-paged-p0", "discovery-paged-p1",
-        "motion-parts-p0", "motion-parts-p1", "discovery-identity"], str(ids))
+        "motion-parts-p0", "motion-parts-p1", "discovery-identity",
+        "motion-wheel"], str(ids))
 
     nodes = struct_nodes(schema)
     for vec in manifest["vectors"]:
@@ -214,7 +215,7 @@ def check_discovery_paged_p0(d):
 def check_discovery_paged_p1(d):
     o = d.objects[0]
     ch = {c.id: c for c in o.channels}
-    vals = list(o.values)
+    texts = list(o.texts)
     # a later page lists the object by name only: identity stays default
     return (d.generation == 3 and d.page == 1 and d.pageCount == 2
             and o.name == "demo_car" and not o.primary and o.typeLabel == ""
@@ -223,8 +224,8 @@ def check_discovery_paged_p1(d):
             and ch[1].name == "session.track" and ch[1].type == "text"
             and ch[2].name == "vehicle.speed" and ch[2].unit == "m/s"
             and ch[2].type == "number"
-            and len(vals) == 1 and vals[0].id == 1
-            and vals[0].which == "text" and vals[0].text == "Test Ring")
+            and len(list(o.values)) == 0
+            and len(texts) == 1 and texts[0].id == 1 and texts[0].text == "Test Ring")
 
 
 def check_motion_parts_p0(m):
@@ -244,6 +245,16 @@ def check_motion_parts_p1(m):
             and m.part == 1 and m.partCount == 2
             and o.name == "demo_car" and o.orientation.w == 0
             and o.which == "noDynamics" and cv == {2: 12.5})
+
+
+def check_motion_wheel(m):
+    o = m.objects[0]
+    w = o.drivePoints[0].wheel
+    return (m.timestamp == 8.25 and o.name == "obj"
+            and w.rpm == 1200 and w.slip == 0.0625 and w.compression == 0.03125
+            and w.contact == "asphalt" and w.which == "core"
+            and w.torque.which == "value" and w.torque.value == 850
+            and w.brakePressure.which == "noBrakePressure")
 
 
 def check_discovery_identity(d):
@@ -575,7 +586,7 @@ expected_type = {
     "motion-local-gravity-zero": 1,
     "discovery-paged-p0": 0, "discovery-paged-p1": 0,
     "motion-parts-p0": 1, "motion-parts-p1": 1,
-    "discovery-identity": 0,
+    "discovery-identity": 0, "motion-wheel": 1,
 }
 
 

@@ -43,9 +43,10 @@ exactly, no epsilon.
 | `discovery-gravity-vector` | `Environment.gravityVector` union: tilted session gravity, scalar `gravity` = its magnitude (C-12) |
 | `motion-local-gravity` | `MotionObject.localGravity.vector` (named union) with `bodyDynamics` reacting to it (C-12) |
 | `motion-local-gravity-zero` | `localGravity.vector` selected with an all-zero vector: weightless, distinct from `noLocalGravity` |
-| `discovery-paged-p0` / `-p1` | paged discovery: generation 3 in two pages, identity on page 0, a session text value on page 1 |
+| `discovery-paged-p0` / `-p1` | paged discovery: generation 3 in two pages, identity on page 0, a session text value (`texts`) on page 1 |
 | `motion-parts-p0` / `-p1` | one tick in two motion parts: pose in part 0, channel values only in part 1 |
 | `discovery-identity` | sender instance identity: `instanceLabel` and `host` |
+| `motion-wheel` | wheel drive point with per-field optionality: `torque.value` selected, `brakePressure` left at `noBrakePressure` |
 
 ## Using the corpus
 
