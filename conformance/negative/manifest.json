@@ -1,0 +1,100 @@
+{
+  "negativeCorpusVersion": 1,
+  "derivedFrom": "conformance/vectors (positive corpus)",
+  "expectations": {
+    "skip": "silently skipped before decoding (not a decode error); the receiver keeps receiving",
+    "decode-error": "counted as a decode error; no frame is dispatched; the receiver keeps receiving",
+    "accept": "decoded and applied; see the description for how unknown parts read",
+    "ignore-page": "decoded, but the page is not merged into the descriptor tables",
+    "drop-value": "decoded; the value is not applied to the channel",
+    "fault": "decoded; a receiver driving hardware does not follow it"
+  },
+  "vectors": [
+    {
+      "id": "runt-datagram",
+      "file": "vectors/runt-datagram.hex",
+      "expect": "skip",
+      "description": "Shorter than the 8-byte envelope"
+    },
+    {
+      "id": "foreign-magic",
+      "file": "vectors/foreign-magic.hex",
+      "expect": "skip",
+      "description": "Another protocol's datagram on the shared group: magic is not OMT1"
+    },
+    {
+      "id": "unknown-frame-type",
+      "file": "vectors/unknown-frame-type.hex",
+      "expect": "skip",
+      "description": "Frame type 0x07, not defined by this schema"
+    },
+    {
+      "id": "truncated-message",
+      "file": "vectors/truncated-message.hex",
+      "expect": "decode-error",
+      "description": "motion-pose cut short: the segment ends past the datagram"
+    },
+    {
+      "id": "segment-size-overflow",
+      "file": "vectors/segment-size-overflow.hex",
+      "expect": "decode-error",
+      "description": "motion-pose whose segment table claims 64 more words than the datagram holds"
+    },
+    {
+      "id": "multi-segment",
+      "file": "vectors/multi-segment.hex",
+      "expect": "accept",
+      "description": "motion-pose content in a multi-segment message (valid, never sent by canonical senders): reads like motion-pose"
+    },
+    {
+      "id": "non-canonical-null-text",
+      "file": "vectors/non-canonical-null-text.hex",
+      "expect": "accept",
+      "description": "Discovery with gameName, typeLabel and location as null pointers: read as \"\""
+    },
+    {
+      "id": "unknown-dynamics-variant",
+      "file": "vectors/unknown-dynamics-variant.hex",
+      "expect": "accept",
+      "description": "motion-bodydynamics with dynamics discriminant 9: treat as noDynamics, keep pose"
+    },
+    {
+      "id": "unknown-drivepoint-variant",
+      "file": "vectors/unknown-drivepoint-variant.hex",
+      "expect": "accept",
+      "description": "motion-drivepoints with drive point 1 (id 1) discriminant 99: ignore its state, keep the others"
+    },
+    {
+      "id": "unknown-wheel-measurement-variant",
+      "file": "vectors/unknown-wheel-measurement-variant.hex",
+      "expect": "accept",
+      "description": "motion-wheel with the rpm optionality union's discriminant 5: treat as noRpm, keep the other fields"
+    },
+    {
+      "id": "page-index-out-of-range",
+      "file": "vectors/page-index-out-of-range.hex",
+      "expect": "ignore-page",
+      "description": "discovery-paged-p1 with page 2 of pageCount 2: malformed page, ignored"
+    },
+    {
+      "id": "type-mismatch-value",
+      "file": "vectors/type-mismatch-value.hex",
+      "expect": "drop-value",
+      "description": "After discovery-channels: boolean channel id 2 sent as a number: drop the value",
+      "after": "discovery-channels"
+    },
+    {
+      "id": "undeclared-channel",
+      "file": "vectors/undeclared-channel.hex",
+      "expect": "drop-value",
+      "description": "After discovery-channels: channel id 99, which nothing declares: never applied",
+      "after": "discovery-channels"
+    },
+    {
+      "id": "nonfinite-pose",
+      "file": "vectors/nonfinite-pose.hex",
+      "expect": "fault",
+      "description": "motion-pose with position x NaN and y +inf: decodes; receivers driving hardware treat it as a fault (implementation-udp.md \u00a7 Trust and safety)"
+    }
+  ]
+}

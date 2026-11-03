@@ -33,7 +33,7 @@ A descriptor set that does not fit one datagram is split into **pages**: `Discov
 - Page 0 carries the primary object's identity and drive points, and the channels a motion consumer needs first (ratified annex channels, `session.paused`). Session `values` that change during a session SHOULD ride their own page.
 - A change to session `values` or `texts` re-sends only the page carrying them.
 
-Receivers merge the pages of a generation by object name and channel id; each page is usable as soon as it arrives, with no need to wait for the rest. A frame with a different `generation` (or a new `sessionStartUnixUs`) starts a new descriptor set. Receivers keep the previous generation's tables while motion frames still carry its `generation`, so a vehicle swap never misreads ids. An unpaged frame (`pageCount` 0 or 1) replaces the descriptor set whole.
+A page whose `page` is not below its `pageCount` is malformed: receivers ignore it. Receivers merge the pages of a generation by object name and channel id; each page is usable as soon as it arrives, with no need to wait for the rest. A frame with a different `generation` (or a new `sessionStartUnixUs`) starts a new descriptor set. Receivers keep the previous generation's tables while motion frames still carry its `generation`, so a vehicle swap never misreads ids. An unpaged frame (`pageCount` 0 or 1) replaces the descriptor set whole.
 
 ### Motion parts
 

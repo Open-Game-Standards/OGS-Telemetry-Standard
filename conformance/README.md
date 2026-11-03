@@ -52,6 +52,9 @@ exactly, no epsilon.
 | `motion-drivepoints` | wheel measuring everything incl. `tyre`, propeller `extended`, jet `thrust`, generic `force` |
 | `motion-texts` | a `TextValue` in a motion frame beside a number in `channels` |
 
+Malformed and future-shaped datagrams a receiver must survive live in
+[negative/](negative/).
+
 ## Using the corpus
 
 - **Decode direction (receivers)**: parse each `.hex`, decode, compare

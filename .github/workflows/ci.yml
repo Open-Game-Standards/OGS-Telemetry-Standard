@@ -15,3 +15,4 @@ jobs:
           python-version: "3.x"
       - run: pip install pycapnp
       - run: python conformance/validate.py
+      - run: python conformance/negative/check.py

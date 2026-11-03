@@ -171,6 +171,12 @@ plus a semantic manifest. Two checks, either or both:
 
 All corpus floats are float32-exact, so comparisons need no epsilon.
 
+Receivers also run the **negative corpus**
+([conformance/negative/](conformance/negative/)): malformed, foreign and
+future-shaped datagrams, each with what a receiver must do (skip, count a
+decode error, read an unknown variant as its default, drop a value, treat
+non-finite pose as a fault).
+
 Instant sanity check with the official tool. Note the `.hex` files are
 text: the 8-byte envelope is 16 hex characters, so strip from character
 17 (not byte 9):
