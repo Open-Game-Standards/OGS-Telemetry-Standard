@@ -53,13 +53,14 @@ def main():
         sys.exit(1)
     check("manifest schemaVersion 1", manifest["schemaVersion"] == 1)
     ids = [v["id"] for v in manifest["vectors"]]
-    check("sixteen known vectors", ids == [
+    check("twenty known vectors", ids == [
         "discovery-minimal", "discovery-channels", "motion-pose",
         "motion-channels", "motion-multi", "motion-bodydynamics",
         "event-impact", "discovery-gravity-vector", "motion-local-gravity",
         "motion-local-gravity-zero", "discovery-paged-p0", "discovery-paged-p1",
         "motion-parts-p0", "motion-parts-p1", "discovery-identity",
-        "motion-wheel"], str(ids))
+        "motion-wheel", "motion-kinematics", "discovery-drivepoints",
+        "motion-drivepoints", "motion-texts"], str(ids))
 
     nodes = struct_nodes(schema)
     for vec in manifest["vectors"]:
@@ -98,7 +99,8 @@ def check_discovery_minimal(d):
             and d.sessionStartUnixUs == 1_730_000_000_000_000
             and len(d.objects) == 1 and d.objects[0].name == "obj"
             and d.objects[0].primary
-            and d.environment.airDensity == 1.25
+            and d.environment.atmosphere.which == "known"
+            and d.environment.atmosphere.known.airDensity == 1.25
             and d.environment.medium == "asphalt"
             and d.instanceLabel == "" and d.host == "")
 
@@ -251,10 +253,58 @@ def check_motion_wheel(m):
     o = m.objects[0]
     w = o.drivePoints[0].wheel
     return (m.timestamp == 8.25 and o.name == "obj"
-            and w.rpm == 1200 and w.slip == 0.0625 and w.compression == 0.03125
-            and w.contact == "asphalt" and w.which == "core"
+            and w.contact == "asphalt" and w.which == "noTyre"
+            and w.rpm.which == "value" and w.rpm.value == 1200
+            and w.slip.value == 0.0625 and w.compression.value == 0.03125
             and w.torque.which == "value" and w.torque.value == 850
+            and w.steerAngle.which == "noSteerAngle"
+            and w.loadForce.which == "noLoadForce"
+            and w.damperVelocity.which == "noDamperVelocity"
             and w.brakePressure.which == "noBrakePressure")
+
+
+def check_motion_kinematics(m):
+    o = m.objects[0]
+    k = o.kinematics
+    return (m.timestamp == 9.5 and o.which == "kinematics"
+            and k.velocity.x == 0.5 and k.velocity.y == -0.25 and k.velocity.z == 12
+            and k.acceleration.x == 0.125 and k.acceleration.z == 2.5)
+
+
+def check_discovery_drivepoints(d):
+    o = d.objects[0]
+    p = list(o.drivePoints)
+    ch = list(o.channels)
+    return (len(p) == 4
+            and p[0].which == "wheel" and p[0].wheel.radius == 0.3125
+            and p[0].wheel.driven and p[0].wheel.steered
+            and p[0].wheel.which == "suspension"
+            and p[0].wheel.suspension.travel.max == 0.125
+            and p[1].which == "propeller" and p[1].propeller.blades == 3
+            and p[2].which == "jet"
+            and p[3].which == "generic" and p[3].generic.ratedForce == 1500
+            and len(ch) == 1 and ch[0].type == "unspecified")
+
+
+def check_motion_drivepoints(m):
+    p = list(m.objects[0].drivePoints)
+    w = p[0].wheel
+    return (len(p) == 4 and w.contact == "gravel"
+            and w.which == "tyre" and w.tyre.wear == 0.875
+            and w.rpm.value == 900 and w.steerAngle.value == 0.25
+            and w.loadForce.value == 4200 and w.damperVelocity.value == -0.5
+            and w.brakePressure.which == "value" and w.brakePressure.value == 250000
+            and p[1].propeller.which == "extended" and p[1].propeller.extended.thrust == 2000
+            and p[2].jet.which == "thrust" and p[2].jet.thrust == 40000
+            and p[3].generic.engaged and p[3].generic.force.y == 750)
+
+
+def check_motion_texts(m):
+    o = m.objects[0]
+    t = list(o.texts)
+    c = list(o.channels)
+    return (len(t) == 1 and t[0].id == 1 and t[0].text == "Pit lane"
+            and len(c) == 1 and c[0].id == 2 and c[0].number == 12.5)
 
 
 def check_discovery_identity(d):
@@ -586,7 +636,8 @@ expected_type = {
     "motion-local-gravity-zero": 1,
     "discovery-paged-p0": 0, "discovery-paged-p1": 0,
     "motion-parts-p0": 1, "motion-parts-p1": 1,
-    "discovery-identity": 0, "motion-wheel": 1,
+    "discovery-identity": 0, "motion-wheel": 1, "motion-kinematics": 1,
+    "discovery-drivepoints": 0, "motion-drivepoints": 1, "motion-texts": 1,
 }
 
 

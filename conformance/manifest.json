@@ -1,5 +1,5 @@
 {
-  "corpusVersion": 8,
+  "corpusVersion": 9,
   "schemaVersion": 1,
   "envelope": {
     "magic": "OMT1",
@@ -18,11 +18,15 @@
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 9.5,
-          "medium": "asphalt"
+          "medium": "asphalt",
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
+          }
         },
         "objects": [
           {
@@ -43,11 +47,15 @@
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 9.5,
-          "medium": "asphalt"
+          "medium": "asphalt",
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
+          }
         },
         "objects": [
           {
@@ -239,14 +247,18 @@
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 5,
           "medium": "vacuum",
           "gravityVector": {
             "x": 3,
             "y": -4
+          },
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
           }
         },
         "objects": [
@@ -325,11 +337,15 @@
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 9.5,
-          "medium": "asphalt"
+          "medium": "asphalt",
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
+          }
         },
         "objects": [
           {
@@ -360,11 +376,15 @@
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 9.5,
-          "medium": "asphalt"
+          "medium": "asphalt",
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
+          }
         },
         "objects": [
           {
@@ -451,15 +471,12 @@
       "id": "discovery-identity",
       "file": "vectors/discovery-identity.hex",
       "frameType": "discovery",
-      "description": "Sender instance identity for session pickers and pinning: instanceLabel and host",
+      "description": "Sender instance identity for session pickers and pinning: instanceLabel and host; an environment without an atmosphere model (noAtmosphere)",
       "input": {
         "schemaVersion": 1,
         "gameName": "conformance",
         "sessionStartUnixUs": 1730000000000000,
         "environment": {
-          "airDensity": 1.25,
-          "temperature": 20,
-          "pressure": 1,
           "gravity": 9.5,
           "medium": "asphalt"
         },
@@ -478,7 +495,7 @@
       "id": "motion-wheel",
       "file": "vectors/motion-wheel.hex",
       "frameType": "motion",
-      "description": "Wheel drive point measuring torque but not brake pressure: named optionality unions torque.value selected, brakePressure left at noBrakePressure",
+      "description": "Wheel drive point measuring rpm, slip, compression and torque: each a named optionality union with value selected; steer, load, damper, brake pressure and tyre unset",
       "input": {
         "timestamp": 8.25,
         "objects": [
@@ -495,14 +512,253 @@
             "drivePoints": [
               {
                 "wheel": {
-                  "rpm": 1200,
-                  "slip": 0.0625,
-                  "compression": 0.03125,
                   "contact": "asphalt",
+                  "rpm": {
+                    "value": 1200
+                  },
+                  "slip": {
+                    "value": 0.0625
+                  },
+                  "compression": {
+                    "value": 0.03125
+                  },
                   "torque": {
                     "value": 850
                   }
                 }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "motion-kinematics",
+      "file": "vectors/motion-kinematics.hex",
+      "frameType": "motion",
+      "description": "Pose \u002B kinematics union variant: world-space velocity and coordinate acceleration",
+      "input": {
+        "timestamp": 9.5,
+        "objects": [
+          {
+            "name": "obj",
+            "position": {
+              "x": 1,
+              "y": 0.5,
+              "z": -2
+            },
+            "orientation": {
+              "w": 1
+            },
+            "kinematics": {
+              "velocity": {
+                "x": 0.5,
+                "y": -0.25,
+                "z": 12
+              },
+              "acceleration": {
+                "x": 0.125,
+                "z": 2.5
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "discovery-drivepoints",
+      "file": "vectors/discovery-drivepoints.hex",
+      "frameType": "discovery",
+      "description": "Every drive-point descriptor variant with its spec (wheel with suspension, propeller, jet, generic) and a channel with its value type left unspecified",
+      "input": {
+        "schemaVersion": 1,
+        "gameName": "conformance",
+        "sessionStartUnixUs": 1730000000000000,
+        "environment": {
+          "gravity": 9.5,
+          "medium": "asphalt",
+          "atmosphere": {
+            "known": {
+              "airDensity": 1.25,
+              "temperature": 20,
+              "pressure": 1
+            }
+          }
+        },
+        "objects": [
+          {
+            "name": "obj",
+            "type": "vehicle",
+            "primary": true,
+            "drivePoints": [
+              {
+                "name": "wheel_fl",
+                "offset": {
+                  "x": -0.75,
+                  "y": -0.25,
+                  "z": 1.5
+                },
+                "wheel": {
+                  "radius": 0.3125,
+                  "driven": true,
+                  "steered": true,
+                  "suspension": {
+                    "travel": {
+                      "min": -0.0625,
+                      "max": 0.125
+                    },
+                    "stiffness": 65000,
+                    "damping": 5000
+                  }
+                }
+              },
+              {
+                "id": 1,
+                "name": "prop",
+                "offset": {
+                  "z": 2
+                },
+                "propeller": {
+                  "diameter": 1.875,
+                  "blades": 3
+                }
+              },
+              {
+                "id": 2,
+                "name": "jet",
+                "offset": {
+                  "z": -3
+                },
+                "jet": null
+              },
+              {
+                "id": 3,
+                "name": "fan",
+                "offset": {
+                  "y": 1
+                },
+                "generic": {
+                  "ratedForce": 1500
+                }
+              }
+            ],
+            "channels": [
+              {
+                "name": "mod.value"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "motion-drivepoints",
+      "file": "vectors/motion-drivepoints.hex",
+      "frameType": "motion",
+      "description": "State for each drive-point kind: a wheel measuring every quantity incl. tyre, a propeller with pitch and thrust, a jet with thrust, a generic point with force",
+      "input": {
+        "timestamp": 10.25,
+        "objects": [
+          {
+            "name": "obj",
+            "position": {
+              "x": 3
+            },
+            "orientation": {
+              "w": 1
+            },
+            "drivePoints": [
+              {
+                "wheel": {
+                  "contact": "gravel",
+                  "tyre": {
+                    "pressure": 180000,
+                    "temperature": 85,
+                    "wear": 0.875
+                  },
+                  "rpm": {
+                    "value": 900
+                  },
+                  "slip": {
+                    "value": 0.125
+                  },
+                  "compression": {
+                    "value": 0.0625
+                  },
+                  "steerAngle": {
+                    "value": 0.25
+                  },
+                  "loadForce": {
+                    "value": 4200
+                  },
+                  "damperVelocity": {
+                    "value": -0.5
+                  },
+                  "torque": {
+                    "value": 300
+                  },
+                  "brakePressure": {
+                    "value": 250000
+                  }
+                }
+              },
+              {
+                "id": 1,
+                "propeller": {
+                  "rpm": 2400,
+                  "extended": {
+                    "pitch": 0.375,
+                    "thrust": 2000
+                  }
+                }
+              },
+              {
+                "id": 2,
+                "jet": {
+                  "throttle": 0.75,
+                  "thrust": 40000
+                }
+              },
+              {
+                "id": 3,
+                "generic": {
+                  "engaged": true,
+                  "force": {
+                    "y": 750
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "motion-texts",
+      "file": "vectors/motion-texts.hex",
+      "frameType": "motion",
+      "description": "A text channel value in a motion frame: TextValue in texts beside a number in channels",
+      "input": {
+        "timestamp": 11.5,
+        "objects": [
+          {
+            "name": "demo_car",
+            "position": {
+              "x": 1
+            },
+            "orientation": {
+              "w": 1
+            },
+            "channels": [
+              {
+                "id": 2,
+                "number": 12.5
+              }
+            ],
+            "texts": [
+              {
+                "id": 1,
+                "text": "Pit lane"
               }
             ]
           }

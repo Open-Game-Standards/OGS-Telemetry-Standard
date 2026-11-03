@@ -45,8 +45,12 @@ exactly, no epsilon.
 | `motion-local-gravity-zero` | `localGravity.vector` selected with an all-zero vector: weightless, distinct from `noLocalGravity` |
 | `discovery-paged-p0` / `-p1` | paged discovery: generation 3 in two pages, identity on page 0, a session text value (`texts`) on page 1 |
 | `motion-parts-p0` / `-p1` | one tick in two motion parts: pose in part 0, channel values only in part 1 |
-| `discovery-identity` | sender instance identity: `instanceLabel` and `host` |
-| `motion-wheel` | wheel drive point with per-field optionality: `torque.value` selected, `brakePressure` left at `noBrakePressure` |
+| `discovery-identity` | sender instance identity: `instanceLabel` and `host`; `noAtmosphere` |
+| `motion-wheel` | wheel drive point with per-field optionality: rpm, slip, compression and torque selected, every other measurement and the tyre unset |
+| `motion-kinematics` | pose + `kinematics` union variant: world-space velocity and coordinate acceleration |
+| `discovery-drivepoints` | every drive-point descriptor variant with its spec, and a channel with `unspecified` value type |
+| `motion-drivepoints` | wheel measuring everything incl. `tyre`, propeller `extended`, jet `thrust`, generic `force` |
+| `motion-texts` | a `TextValue` in a motion frame beside a number in `channels` |
 
 ## Using the corpus
 
