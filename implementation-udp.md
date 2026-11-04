@@ -100,6 +100,16 @@ All values are defaults — every implementation should make endpoint and mode c
 
 IPv4 is the default. A sender uses **one** address family for a session: IPv4, or IPv6 on a network without IPv4. Never both at once, since a receiver joined to both groups would see the two copies as two senders (§ Senders and sessions). Receivers SHOULD join both groups so that IPv6-only senders are found. The IPv6 group is link-local: join and send on the interface facing the LAN (its interface index), as for any link-local multicast.
 
+## Network interfaces
+
+Receiving telemetry from other machines on the network is a core use of OGS-TS, and it depends on the sender's datagrams leaving on a real network interface. Multicast traffic is routed by group address, not port, and an operating system's choice of interface for a group can change while a stream is running: on Windows, once anything on a host has sent to a group over loopback, the system's default for that group on that host is loopback. Default-route senders on that host then stop reaching the network, and receivers joined on the network interface stop hearing them, with no error on either end, even after the loopback sender has closed.
+
+- **Senders MUST NOT send to the default groups over loopback.** Traffic meant to stay on one machine, such as a demo or a test, uses a different group or the unicast alternative.
+- **Senders SHOULD name their interface** (`IP_MULTICAST_IF`): the one the user configured, otherwise the default route's, rather than leaving the choice to the system.
+- **Receivers SHOULD join by name on the same interface, and also on loopback** where the host allows it, so they keep hearing senders on the same machine whichever way those senders' traffic is routed. A failure to join on loopback is not an error: some systems ship with multicast disabled there.
+- **For the IPv6 group,** which has no route to look up, the interface is the IPv4 default route's if it has IPv6, otherwise the first interface with an IPv6 gateway, otherwise the first with IPv6 that isn't loopback or a tunnel.
+- On a host with several interfaces the default route may not face the LAN, so implementations make the interface configurable.
+
 ## Wireless networks
 
 OGS-TS works over Wi-Fi, so standalone VR headsets, handhelds and battery-powered devices can send or receive it. The expected network is Wi-Fi 5 (802.11ac) or newer on 5 or 6 GHz. Wi-Fi handles multicast less well than a wired network, and these points apply:
@@ -138,6 +148,28 @@ Paged discovery is paced so that no tick pays for the whole set:
 #include <unistd.h>
 #include <cstring>
 
+// This host's address on its default route, or INADDR_ANY (the system chooses)
+// when it has none. Connecting a UDP socket only looks up the route: nothing is
+// sent. 192.0.2.1 is reserved for documentation (RFC 5737).
+inline in_addr defaultRouteAddress() {
+    in_addr result{};
+    result.s_addr = htonl(INADDR_ANY);
+    int probe = socket(AF_INET, SOCK_DGRAM, 0);
+    sockaddr_in remote{};
+    remote.sin_family = AF_INET;
+    remote.sin_port = htons(9);
+    remote.sin_addr.s_addr = inet_addr("192.0.2.1");
+    sockaddr_in local{};
+    socklen_t length = sizeof(local);
+    if (connect(probe, reinterpret_cast<sockaddr*>(&remote), sizeof(remote)) == 0 &&
+        getsockname(probe, reinterpret_cast<sockaddr*>(&local), &length) == 0 &&
+        (ntohl(local.sin_addr.s_addr) >> 24) != 127) {
+        result = local.sin_addr;
+    }
+    close(probe);
+    return result;
+}
+
 class UdpTelemetrySender {
 public:
     UdpTelemetrySender(const char* group = "239.255.17.17", uint16_t port = 40123) {
@@ -150,6 +182,10 @@ public:
         // Enable loopback so dashboards on the same machine see the stream
         unsigned char loop = 1;
         setsockopt(fd_, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
+
+        // Leave on a real interface (§ Network interfaces)
+        in_addr nic = defaultRouteAddress();
+        setsockopt(fd_, IPPROTO_IP, IP_MULTICAST_IF, &nic, sizeof(nic));
 
         addr_.sin_family = AF_INET;
         addr_.sin_port = htons(port);
@@ -230,7 +266,12 @@ public:
 
         ip_mreq mreq{};
         mreq.imr_multiaddr.s_addr = inet_addr(group);
-        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        // defaultRouteAddress() as in the sender (§ Network interfaces)
+        mreq.imr_interface = defaultRouteAddress();
+        setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+
+        // Also hear senders on this machine if their traffic moves to loopback
+        mreq.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
         setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
     }
 
