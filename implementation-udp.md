@@ -106,7 +106,7 @@ Receiving telemetry from other machines on the network is a core use of OGS-TS, 
 
 - **Senders MUST NOT send to the default groups over loopback.** Traffic meant to stay on one machine, such as a demo or a test, uses a different group or the unicast alternative.
 - **Senders SHOULD name their interface** (`IP_MULTICAST_IF`): the one the user configured, otherwise the default route's, rather than leaving the choice to the system.
-- **Receivers SHOULD join by name on the same interface, and also on loopback** where the host allows it, so they keep hearing senders on the same machine whichever way those senders' traffic is routed. A failure to join on loopback is not an error: some systems ship with multicast disabled there.
+- **Receivers SHOULD join by name on the same interface, and also listen on loopback** where the host allows it, so they keep hearing senders on the same machine whichever way those senders' traffic is routed. Joining doesn't move a group; only sending does. A failure to join on loopback is not an error: some systems ship with multicast disabled there.
 - **For the IPv6 group,** which has no route to look up, the interface is the IPv4 default route's if it has IPv6, otherwise the first interface with an IPv6 gateway, otherwise the first with IPv6 that isn't loopback or a tunnel.
 - On a host with several interfaces the default route may not face the LAN, so implementations make the interface configurable.
 
