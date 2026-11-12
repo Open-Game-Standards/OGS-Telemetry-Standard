@@ -21,6 +21,8 @@ is a spec change (see DESIGN.md, Evolution).
 Orientation is a unit quaternion (x/y/z/w). Senders normalize; receivers may
 renormalize defensively. Either sign is the same rotation — receivers must
 not prefer one sign. The quaternion rotates **world axes into body axes**.
+A sender that does not measure orientation sends the identity quaternion
+`(0, 0, 0, 1)`; all-zero is not a rotation.
 
 ## C-3 Units
 
@@ -118,7 +120,9 @@ senders needing more split degrees from fractional degrees.
 `EventFrame` carries discrete stimuli (impacts, gunfire, footsteps) for
 haptic and cueing consumers. Each event carries a session-monotonic `id`;
 the transport is lossy, so senders SHOULD re-carry recent events (~100 ms
-window) and receivers MUST dedup by id. `intensity` is 0..1 normalized
+window) and receivers MUST dedup by id. A sender MUST send every event at
+least once, however slowly it ticks, and keeps every event frame within the
+datagram budget (implementation-udp.md § Event splitting). `intensity` is 0..1 normalized
 (C-3). `duration` is seconds: 0 = momentary impulse, >0 = a sustain
 window the consumer may render continuously. `direction` is optional,
 in the body frame (C-1) of the associated object, and points **toward the
@@ -145,6 +149,9 @@ Senders:
 - While paused, a sender SHOULD send `noDynamics`: no specific force or
   angular rates are measured while the simulation is stopped, and a
   derivative taken across the pause boundary is meaningless.
+- While paused, a sender SHOULD NOT send new events (C-10), and SHOULD
+  discard events queued before the pause rather than send them after it:
+  actuators are settling, and a stimulus from before the stop is stale.
 - A sender that cannot tell when its game is paused does not declare the
   channel.
 

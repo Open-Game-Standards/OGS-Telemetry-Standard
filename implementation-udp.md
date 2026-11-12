@@ -19,7 +19,7 @@ Receivers check the magic and silently skip foreign packets (the multicast group
 
 ## Datagram budget
 
-Every datagram, envelope included, MUST be at most **1,400 bytes**, so it travels as one Ethernet frame (a lost IP fragment loses the whole datagram) and no single send costs the sender a long serialization. Most senders never come close: a pose-only motion frame is ~68 bytes and a typical discovery a few hundred. Senders with large descriptor sets (full simulator catalogues, multi-car grids) stay within the budget with three mechanisms.
+Every datagram, envelope included, MUST be at most **1,400 bytes**, so it travels as one Ethernet frame (a lost IP fragment loses the whole datagram) and no single send costs the sender a long serialization. Most senders never come close: a pose-only motion frame is ~68 bytes and a typical discovery a few hundred. Senders with large descriptor sets (full simulator catalogues, multi-car grids) stay within the budget with three mechanisms, and event bursts are split across frames (§ Event splitting).
 
 ### Paged discovery
 
@@ -58,6 +58,7 @@ Every receiver on the network pays for what a sender publishes: multicast reache
 |---|---|---|
 | Motion | one datagram (≤ 1,400 bytes) per tick at 60 Hz, or ~85 KB/s at other rates | pose, dynamics, drive points and ~150 changing channel values per tick |
 | Discovery | ~30 KB per generation, every page re-sent within 2 s (~15 datagrams/s) | ~250–300 channel descriptors with descriptions |
+| Events | one datagram (≤ 1,400 bytes) per replay interval; bursts split across frames | ~16 directional events per datagram |
 
 The envelope comes to ~105 KB/s. On an access point that sends multicast at a 6 Mbit/s basic rate, the lowest common setting on 5 and 6 GHz, that is ~15 % of the channel's airtime; at a 24 Mbit/s basic rate, ~5 %; with multicast-to-unicast conversion, ~1.5 % per device that joined the group. A pose-only or typical game sender uses a fraction of it.
 
@@ -81,6 +82,22 @@ if quieter); receivers MUST dedup by the session-monotonic `id`. Events
 are self-contained (intensity, duration, optional body-frame direction),
 so a late-joined receiver misses only events from before it joined —
 by design, as with motion.
+
+A sender MUST send every event at least once, however slowly it ticks. The
+~100 ms replay window is the redundancy target, not a deadline: a sender
+whose ticks are further apart than the window carries each event in one
+`EventFrame` only, and an event is never dropped unsent because its window
+has passed.
+
+### Event splitting
+
+Event frames stay within the datagram budget like every other frame. A burst
+whose events do not fit one datagram (about 80 bytes each with a direction,
+so roughly 16) is sent as several `EventFrame`s sharing the tick's
+`timestamp`, each carrying a disjoint run of the events. Events are
+self-contained and receivers dedup by `id`, so no part numbering is needed
+and a receiver applies each frame on arrival. Replay re-carries the same
+events in the same grouping or any other that fits the budget.
 
 Event frames are auxiliary: they do not count as the heartbeat and do
 not participate in liveness detection; motion frames remain the sole
@@ -126,7 +143,8 @@ Event replay (CONVENTIONS C-10) and receiver interpolation already absorb occasi
 | Frame | When to send |
 |---|---|
 | `DiscoveryFrame` | session start, on any declared change (vehicle swap, channel set change, medium change), and **re-sent every 2 seconds** — all pages of the current generation |
-| `MotionFrame` | every telemetry tick, ~60 Hz, at the rate discovery declares in `motionRateHz` — **including while the game is paused** (CONVENTIONS C-11) |
+| `MotionFrame` | every telemetry tick, ~60 Hz, at the rate discovery declares in `motionRateHz` — **including while the game is paused** (CONVENTIONS C-11). The declared rate is the achieved mean rate, whatever the host's frame rate, not a ceiling |
+| `EventFrame` | on demand, within the datagram budget (§ Event splitting); every event at least once, re-carried for ~100 ms (CONVENTIONS C-10) |
 
 The 2-second discovery re-send bounds late-joiner wait time at ~1.6 kbit/s of extra traffic for a typical single-page discovery — negligible, and it heals any lost discovery packet. Motion frames are fire-and-forget: receivers hold the last known pose and interpolate across occasional loss.
 
