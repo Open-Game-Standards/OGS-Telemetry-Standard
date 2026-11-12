@@ -64,7 +64,9 @@ bytes cannot show, so they are checked by driving a sender and inspecting
 the datagrams it emits. The reference implementation's tests
 (`ogs-ts-dotnet`, `PublisherRegressionTests`) do this over a loopback socket;
 `ogs-ts-unreal`'s conformance binary checks the same planning logic; the
-reference monitor flags the same rules live.
+reference monitor flags the same rules live. A rule that names no clause is
+a behaviour of the reference implementation that senders deriving their own
+dynamics should match.
 
 | Rule | Check | Monitor finding |
 |---|---|---|
@@ -73,6 +75,7 @@ reference monitor flags the same rules live.
 | Event frames stay within the datagram budget (implementation-udp.md § Event splitting) | A 60-event burst with directions arrives complete in frames of at most 1,400 bytes, disjoint and in order | `datagram-budget` |
 | No events while paused; queued events are dropped at the pause (CONVENTIONS C-11) | An event fired before and one fired during a pause send nothing; one fired after resuming is sent | none |
 | An unmeasured orientation is the identity quaternion (CONVENTIONS C-2) | A sender with no orientation bound sends `(0, 0, 0, 1)` | `quaternion-norm` |
+| Derived dynamics are static at a moving spawn or resume: the sample after a reset does not difference against a zero previous velocity (reference `BodyDynamicsDeriver`, IMPLEMENTING.md; no CONVENTIONS clause) | A sender spawning at cruise speed reads only the gravity reaction, with measured and with derived velocity | none |
 
 Missing motion frames (`motion-gap`) and delay variation (`motion-jitter`)
 are likewise visible to the monitor, from the senders' own timestamps.
