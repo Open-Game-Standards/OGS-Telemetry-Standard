@@ -187,6 +187,26 @@ implementations' `BodyDynamicsDeriver` (dotnet/Unity/Godot share the C#
 class; UE has the C++ twin). Getting this wrong inverts pitch and roll
 cues silently — prefer the shared helper over hand-mapping.
 
+### Deriving dynamics from pose
+
+A sender with no native accelerometer or angular rate derives `bodyDynamics`
+from successive poses. It SHOULD:
+
+1. **Start from the static value.** On its first sample, and after any
+   reset (spawn, respawn, teleport, a change of tracked object, resuming
+   from a pause per C-11), report the gravity reaction in the body frame
+   and zero angular rates.
+2. **Seed velocity at a reset, not zero.** The sample after a reset takes
+   the previous velocity from that sample's own velocity (engine-measured
+   when the engine has one, otherwise the position delta) and keeps
+   reporting the static value. Differencing against a zero previous
+   velocity reads a craft that is already moving as a jump from rest: a
+   false acceleration of `v / dt`, large for any vehicle and enormous for a
+   spacecraft at cruise.
+
+The reference `BodyDynamicsDeriver` does both, and the conformance suites
+check it (conformance/README.md § Sender behaviour).
+
 ## Validate against the conformance corpus
 
 [`conformance/`](conformance/) holds golden datagrams (envelope included)
