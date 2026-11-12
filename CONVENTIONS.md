@@ -20,7 +20,10 @@ is a spec change (see DESIGN.md, Evolution).
 
 Orientation is a unit quaternion (x/y/z/w). Senders normalize; receivers may
 renormalize defensively. Either sign is the same rotation — receivers must
-not prefer one sign. The quaternion rotates **world axes into body axes**.
+not prefer one sign. The quaternion rotates **world axes into body axes**:
+it is the object's attitude, so a body-frame vector `v_body` is
+`v_world = q · v_body` in the world frame and `v_body = q⁻¹ · v_world` the
+other way (C-12 uses the latter for specific force).
 A sender that does not measure orientation sends the identity quaternion
 `(0, 0, 0, 1)`; all-zero is not a rotation.
 
@@ -247,9 +250,13 @@ object it cannot be carried by `Environment.gravityVector`.
   the support force).
 - A receiver that reads only the scalar cannot interpret such a sender: it
   sees the constant support force as a sustained acceleration. Receivers
-  that implement C-12 resolve `localGravity` per frame; one that does not
-  SHOULD NOT drive actuators from an object that sends it.
-- Receivers SHOULD take cues from specific force with the effective
-  gravity removed, and from angular rates, never from a static
-  orientation: an object steady upside down in the world is not a command
-  to invert the platform.
+  that implement C-12 resolve `localGravity` per frame. One that does not
+  SHOULD NOT drive actuators from an object whose `localGravity` differs
+  from the effective environment gravity, since it cannot tell the
+  support force from a maneuver. Senders that never set `localGravity`,
+  or set it equal to the environment's, are unaffected.
+- For such an object, receivers SHOULD take cues from specific force with
+  the effective gravity removed, and from angular rates: its static
+  orientation says nothing about what the occupant feels, so an object
+  steady upside down in the world is not a command to invert the
+  platform.
