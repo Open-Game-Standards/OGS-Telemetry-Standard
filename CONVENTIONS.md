@@ -226,3 +226,30 @@ Receivers:
 - Receivers that present acceleration in multiples of g choose their own
   reference (standard gravity 9.80665 m/s² or the effective magnitude);
   the wire stays in m/s² (C-3).
+
+Vessel-fixed gravity:
+
+Some objects carry their own "down": a spacecraft with artificial gravity
+pulls the occupant toward the cabin floor whatever the vessel's attitude
+in the world. This is `localGravity`, and because it turns with the
+object it cannot be carried by `Environment.gravityVector`.
+
+- The sender sets `localGravity.vector` = q · (0, −`g`, 0) in **every**
+  motion frame, where `g` is the cabin gravity magnitude and q the
+  object's orientation, and computes `bodyDynamics` against it (above).
+- Steady flight is then the same in every attitude, inverted included:
+  coordinate acceleration **a** is zero and specific force is
+  (0, +`g`, 0). A maneuver shows as the difference from that baseline.
+- `Environment` describes the world, not the cabin. A sender whose world
+  has no gravity (vacuum) declares `gravity` 0, and does not repeat the
+  cabin value there: a receiver that applies the scalar along world −Y
+  would remove it from the wrong direction (inverted, it would find twice
+  the support force).
+- A receiver that reads only the scalar cannot interpret such a sender: it
+  sees the constant support force as a sustained acceleration. Receivers
+  that implement C-12 resolve `localGravity` per frame; one that does not
+  SHOULD NOT drive actuators from an object that sends it.
+- Receivers SHOULD take cues from specific force with the effective
+  gravity removed, and from angular rates, never from a static
+  orientation: an object steady upside down in the world is not a command
+  to invert the platform.
