@@ -57,6 +57,26 @@ Malformed and future-shaped datagrams a receiver must survive live in
 recording ([recording.md](../recording.md)): five corpus datagrams from
 two senders, one IPv4 and one IPv6; `validate.py` checks it.
 
+## Sender behaviour
+
+The vectors fix bytes. Some rules fix what a sender does over time, which
+bytes cannot show, so they are checked by driving a sender and inspecting
+the datagrams it emits. The reference implementation's tests
+(`ogs-ts-dotnet`, `PublisherRegressionTests`) do this over a loopback socket;
+`ogs-ts-unreal`'s conformance binary checks the same planning logic; the
+reference monitor flags the same rules live.
+
+| Rule | Check | Monitor finding |
+|---|---|---|
+| The declared `motionRateHz` is the achieved mean rate at any host frame rate (implementation-udp.md § Send cadence) | A 10 s run at 60, 90 and 144 FPS, and with jittered frames, sends within 1 % of the declared rate; a stall longer than one interval resyncs instead of bursting | `motion-rate` |
+| Every event is sent at least once, however slowly the host ticks (CONVENTIONS C-10) | One event per frame at 60, 10, 9 and 4 FPS, and one fired before the first tick, all arrive | none (receivers cannot see an unsent event) |
+| Event frames stay within the datagram budget (implementation-udp.md § Event splitting) | A 60-event burst with directions arrives complete in frames of at most 1,400 bytes, disjoint and in order | `datagram-budget` |
+| No events while paused; queued events are dropped at the pause (CONVENTIONS C-11) | An event fired before and one fired during a pause send nothing; one fired after resuming is sent | none |
+| An unmeasured orientation is the identity quaternion (CONVENTIONS C-2) | A sender with no orientation bound sends `(0, 0, 0, 1)` | `quaternion-norm` |
+
+Missing motion frames (`motion-gap`) and delay variation (`motion-jitter`)
+are likewise visible to the monitor, from the senders' own timestamps.
+
 ## Using the corpus
 
 - **Decode direction (receivers)**: parse each `.hex`, decode, compare
